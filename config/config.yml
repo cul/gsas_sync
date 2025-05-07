@@ -1,0 +1,6 @@
+# This idea came from SO user Rory O'Kane
+# https://stackoverflow.com/questions/17659506/configuration-file-for-a-standalone-ruby-script
+config:
+  sftp_server:
+    host: "example_server"
+    port: 233
