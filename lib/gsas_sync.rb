@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
-class GsasDissertationManager
-  include Cul::PreservationUtils::FilePath
-
+class GsasSync
   attr_accessor :config
 
   def initialize(config_file)

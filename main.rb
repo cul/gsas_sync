@@ -12,10 +12,6 @@ loader.push_dir('lib')
 loader.setup # ready!
 
 # Run code!
-dissertation_mngr = GsasDissertationManager.new('config/config.yml')
-puts 'valid path' if dissertation_mngr.valid_file_path?('a/b/c')
-
-some_instance = ExampleClass.new
-puts some_instance.example_instance_method
-
-puts ExampleClass.example_class_method
+gsas_sync = GsasSync.new('config/config.yml')
+p gsas_sync.config
+puts 'valid path' if puts Cul::PreservationUtils::FilePath.valid_file_path?('a/b/c')
