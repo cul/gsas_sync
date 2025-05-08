@@ -10,3 +10,8 @@ gem 'zeitwerk', '~> 2.0'
 gem 'cul-preservation_utils', '0.1.6'
 
 gem 'yaml', '~> 0.4.0'
+
+gem 'net-sftp', '~> 4.0'
+# https://github.com/net-ssh/net-ssh/issues/565
+gem 'bcrypt_pbkdf', '>= 1.0', '< 2.0', require: false
+gem 'ed25519', '>= 1.2', '< 2.0', require: false

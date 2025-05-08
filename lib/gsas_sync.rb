@@ -11,6 +11,6 @@ class GsasSync
 
   def load_config_file(config_file)
     config_contents = File.read(config_file)
-    @config = YAML.load(config_contents)
+    @config = YAML.load(config_contents)['config']
   end
 end
