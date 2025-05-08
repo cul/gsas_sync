@@ -1,37 +1,32 @@
-# Example Ruby Script Development Template
+# GsasSync
 
-This is a quick setup template for ruby scripts.  It includes:
+The GsasSync script manages the transfer of dissertations from GSAS to the library's collections.
 
-- A main.js file, which is an example entrypoint file for a ruby script.  If you want to, you can rename this to something more relevant to the script you're writing.
-- A .ruby-version file to specify what version of Ruby you're using.
-- A Gemfile for managing dependencies.
-- Zeitwerk for auto-loading classes and modules in the `lib` directory.
-- RSpec for testing.
-- Automatic generation of a code coverage report when RSpec runs (via simplecov gem).
-- Some example classes and tests (which you can delete in your local copy).
+In particular, it will run on a cron job once a month in order to syncronize and verify the transfer of GSAS dissertations. It retrieves the files from an [AWS Transfer Server](http://docs.aws.amazon.com/transfer/latest/userguide/what-is-aws-transfer-family.html) via [SFTP](https://en.wikipedia.org/wiki/SSH_File_Transfer_Protocol), verifies that the correct files have been downloaded successfully and in the expected format, and then removes them from the remote server. This Transfer Server is managed by GSAS, who will upload each month and maintain backup copies.
 
-This project is meant to be downloaded as a zip file rather than cloned, since you'll most likely be using it as the basis for a new project (as opposed to wanting to push commits to the template code repository).
-
-# Getting started
-
-- Download this repository:
-  - Option 1: Download as a zip file.
-  - Option 2: Clone the repository and then delete the `.git` directory inside your closed copy so that you can initialize a new `.git` repository (with `git init`).
-- Update the `.ruby-version` file based on the version of Ruby that you want to use.
-- Run `bundle install`
-  - Modern installations of ruby come with the `bundler` gem, so this should work as long as you're running `bundle install` in this project's top level directory.
-- To try out the base project and make sure it works, run: `ruby ./main.rb`
-  - It should print out `Hello!` and `Hello again!`
-- To run rspec tests, run: `bundle exec rspec`
-  - The tests should pass.
-
-# Development notes
-
-You can add new classes and modules in the `lib` directory and they'll be auto-loaded and available for use in your `main.js` script thanks to Zeitwerk.  In order for this to work, you'll need to name files according to Zeitwerk rules (https://github.com/fxn/zeitwerk).  Here's a quick summary
-
+## Local development
+#### Install and run the script
 ```
-lib/animal.rb                        -> Animal
-lib/animals/dog.rb                   -> Animals::Dog
-lib/animals/dogs/beagle.rb           -> Animals::Dogs::Beagle
-lib/animals/dogs/golden_retriever.rb -> Animals::Dogs::GoldenRetriever
+git clone UPDATE_WITH_CUL_REPO
+cd gsas_sync
+
+bundle install    # Install dependencies
+rbenv install     # Install correct ruby version
+
+# Create an SSH Tunnel
+sshuttle -r bg2918@connect.cul.columbia.edu 0.0.0.0/0
+
+ruby main.rb      # Run the script
+```
+#### Ready your local environment
+While developing locally, we connect to the test transfer server as the special transfer user. You should obtain a copy of that user's private SSH key and put it in your dev machine's `~/.ssh` directory. Additionally, create a local `config/config.yml` and populate it with the proper credentials. Refer to spec/fixtures/config.yml for reference.
+
+The test and production transfer servers will only allow connections from `connect.cul.columbia.edu`, so you should SSH tunnel to that server while developing locally. You can do so with [sshuttle](https://sshuttle.readthedocs.io/en/stable/) (on mac, you can [install sshhuttle with Homebrew](http://formulae.brew.sh/formula/sshuttle)). Then use the following command to forward your traffic to the connect server while developing:
+```
+sshuttle -r YOUR_UNI@connect.cul.columbia.edu 0.0.0.0/0
+```
+
+### Testing
+```
+bundle exec rspec spec
 ```
