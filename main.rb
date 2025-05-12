@@ -29,14 +29,26 @@ sftp_client.disconnect
 
 # Add any directories that match the yyyy_mm_dissertations/ pattern to an array
 # Validate each in turn
-uploads_dir = Pathname.new('temp/')
+temp_dir_path = "#{Pathname.pwd}/temp/"
+uploads_dir = Pathname.new(temp_dir_path)
 validators = []
 uploads_dir.children.each do |child|
-  validators.push(Validator.new(child.basename)) if child.basename.to_s.match?(/^\d{4}_\d{2}_dissertations$/)
+  if child.basename.to_s.match?(Validator::DISSERTATION_DIR_REGEX)
+    p "#{uploads_dir}#{child.basename}/"
+    validators.push(Validator.new("#{uploads_dir}#{child.basename}/"))
+  end
 end
 validators.each do |validator|
-  if validator.all_required_files_present? && validator.undesirable_characters_in_file_paths? && validator.all_accounted_for_in_manifest? && validator.valid_checksums?
+  # TODO: do NOT lazy evaluate; we want to be able to list ALL of the validation errors so that ALL errors can be
+  # addressed by GSAS at once. Otherwise, there could be a situation where they address an issue, try to transfer again,
+  # and it fails again for a novel reason -- better if they can know all the errors at one time.
+  if validator.all_required_files_present? &&
+     validator.undesirable_characters_in_file_paths? &&
+     validator.all_accounted_for_in_manifest? &&
+     validator.valid_checksums?
     puts 'pass!'
+  else
+    puts 'fail!'
   end
 end
 

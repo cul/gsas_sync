@@ -42,29 +42,29 @@ class SftpClient
       when :open
         # args[0] : file metadata
         puts_t.call "starting download: #{args[0].remote} -> #{args[0].local} (#{args[0].size} bytes}"
-        puts ':open'
-        p args
+        # puts ':open' # TODO: dev
+        # p args # TODO: dev
       when :get
         # args[0] : file metadata
         # args[1] : byte offset in remote file
         # args[2] : data that was received
         puts_t.call "writing #{args[2].length} bytes to #{args[0].local} starting at #{args[1]}"
-        puts ':get' # TODO: dev
-        p args # TODO: dev
+        # puts ':get' # TODO: dev
+        # p args # TODO: dev
       when :close
         # args[0] : file metadata
         puts_t.call "finished with #{args[0].remote}"
-        puts ':close' # TODO: dev
-        p args # TODO: dev
+        # puts ':close' # TODO: dev
+        # p args # TODO: dev
       when :mkdir
         # args[0] : local path name
         puts_t.call "creating directory #{args[0]}"
-        puts ':mkdir' # TODO: dev
-        p args # TODO: dev
+        # puts ':mkdir' # TODO: dev
+        # p args # TODO: dev
       when :finish
         puts_t.call 'all done!'
-        puts ':finish' # TODO: dev
-        p args # TODO: dev
+        # puts ':finish' # TODO: dev
+        # p args # TODO: dev
       end
     end
   end
