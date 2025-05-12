@@ -2,3 +2,4 @@ config:
   sftp_server:
     host: "test_sftp_server"
     user: "test_user"
+    key: "path/to/key"
