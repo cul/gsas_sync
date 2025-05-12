@@ -37,7 +37,7 @@ class SftpClient
   def dl_recursive(remote_src, local_dst) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength
     puts_t = ->(str) { puts "#{TERM_PREFIX}\t#{str}" } # For indenting our output
     puts "#{TERM_PREFIX} Beginning SFTP download..."
-    @sftp_client.download!(remote_src, local_dst, recursive: true) do |event, downloader, *args|
+    @sftp_client.download!(remote_src, local_dst, recursive: true) do |event, _downloader, *args|
       case event
       when :open
         # args[0] : file metadata
