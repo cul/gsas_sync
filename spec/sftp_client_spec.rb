@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-# require 'spec_helper'
-# require 'net/sftp'
+require 'spec_helper'
+require 'net/sftp'
 
 RSpec.describe SftpClient do
   let(:config) { YAML.load(File.read('spec/fixtures/config.yml'))['config'] }
@@ -29,17 +29,28 @@ RSpec.describe SftpClient do
     end
   end
 
-  describe '#disconnect' do
+  describe '#disconnect', focus: true do
+    let(:mock_sftp_session) { instance_double(Net::SFTP::Session) }
+
     it 'invokes Net::SFTP::Session#close_session' do
+      # expect { client.disconnect }.to have_received(:close_channel)
+      client.instance_variable_set(:@sftp_client, mock_sftp_session)
+      expect(mock_sftp_session).to receive(:close_channel)
+      client.disconnect
     end
   end
 
   describe '#sftp_client' do
-    it 'invokes #ssh_session when @sftp_client is nil' do
-      let(:mock_ssh_session) { instance_double(Net::SSH::Session) }
-      allow(client).to receive(:ssh_session).and_return(mock_ssh_session)
+    let(:mock_ssh_session) { instance_double(Net::SSH::Connection::Session) }
+    let(:mock_sftp) { instance_double(Net::SFTP::Session) }
 
-      expect { client.sftp_client }.to have_received(:ssh_sesion)
+    it 'invokes #ssh_session when @sftp_client is nil' do
+      allow(client).to receive(:ssh_session).and_return(mock_ssh_session)
+      allow(Net::SFTP::Session).to receive(:new).and_return(:mock_sftp)
+
+      expect(client).to receive(:ssh_session)
+      client.sftp_client
+      # expect { client.sftp_client }.to have_received(:ssh_sesion)
     end
   end
 
