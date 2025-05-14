@@ -30,11 +30,11 @@ class GsasSync
       graceful_exit
     end
     @elog << ErrorHandling.elog_msg("Downloaded contents of 'uploads/' directory from remote host to local temporary directory:")
-    Dir.entries(TEMP_DIR).each { |f| @elog << "\t - #{f}" }
+    Dir.entries(TEMP_DIR).each { |f| @elog << "\t - #{f}\n" }
   end
 
   def validate_downloaded_files(temp_dir_path)
-    @logger.debug('GsasSync#validate_download_files(): Entry')
+    @logger.debug('GsasSync#validate_downloaded_files(): Entry')
     begin
       # Add any directories that match the yyyy_mm_dissertations/ pattern to an array
       # Validate each in turn
@@ -43,7 +43,7 @@ class GsasSync
       temp_dir.children.each do |f|
         if f.basename.to_s.match?(Validator::DISSERTATION_DIR_REGEX)
           puts "#{temp_dir}#{f.basename}/"
-          validators.push(Validator.new("#{temp_dir}#{f.basename}/"))
+          validators.push(Validator.new("#{temp_dir}#{f.basename}/", @logger, @elog))
         end
       end
       validators.each do |validator|
@@ -72,7 +72,7 @@ class GsasSync
   private
 
   def load_config_file(config_file)
-    config_contents = File.read(config_file)
+    config_contents = File.read(config_file) # from IO: Also closes the stream
     @config = YAML.load(config_contents)['config']
   end
 end

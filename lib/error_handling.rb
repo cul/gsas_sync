@@ -8,7 +8,7 @@ module ErrorHandling
   # Opens and returns the elog file object
   def self.init(logs_dir = DEF_DIR, filename = DEF_FN, logger)
     filepath = "#{logs_dir}/#{filename}"
-    logger.info "Initializing Error Logs at #{filepath}"
+    logger.debug "Initializing Error Logs at #{filepath}"
     begin
       File.mkdir(logs_dir) unless File.directory?(logs_dir)
       File.delete(filepath) if File.file?(filepath)
