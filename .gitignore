@@ -12,3 +12,4 @@
 config
 temp
 logs
+!spec/fixtures/temp

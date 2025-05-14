@@ -1,0 +1,3 @@
+c4f9a801987392e0d0a802a616c853ab89dd61c8c76449883a608e25319ee5df  ./data/doe_john/doe_dissertation.pdf
+b2ace785dc64ea0db9c4675801194b723a4fe98c3343785226ed7cf5e0e6d87d  ./data/doe_john/doe_presentation.pptx
+1abb1a48d7c2cf588a67f7c97d6a52692006a979826e9f1d267ff630b852c09b  ./data/woe_jane/woe_dissertation.pdf
