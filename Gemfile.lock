@@ -130,6 +130,7 @@ DEPENDENCIES
   cul-preservation_utils (= 0.1.6)
   ed25519 (>= 1.2, < 2.0)
   net-sftp (~> 4.0)
+  rainbow (~> 3.1)
   rspec (~> 3.0)
   rspec-mocks (~> 3.13)
   rubocul (~> 4.0)

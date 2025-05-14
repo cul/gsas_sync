@@ -11,9 +11,9 @@ class Validator
   DATE_PREFIX_LEN = 7
   DISSERTATION_DIR_REGEX = /^\d{4}_\d{2}_dissertations$/
   MANIFEST_REGEX = /^manifest-([a-zA-Z0-9]+)\.txt$/
-  ITEMS_REGEX = /^\d{4}_\d{2}_items\.csv$/ # todo, well this could be done with File.exist? actually, because we would know what we are looking for at that point!!
+  # ITEMS_REGEX = /^\d{4}_\d{2}_items\.csv$/ # todo, well this could be done with File.exist? actually, because we would know what we are looking for at that point!!
 
-  def initialize(directory)
+  def initialize(directory, elog)
     @parent = Pathname.new(directory)
   end
 

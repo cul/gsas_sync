@@ -29,7 +29,7 @@ RSpec.describe SftpClient do
     end
   end
 
-  describe '#disconnect', focus: true do
+  describe '#disconnect' do
     let(:mock_sftp_session) { instance_double(Net::SFTP::Session) }
 
     it 'invokes Net::SFTP::Session#close_session' do
