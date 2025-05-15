@@ -19,6 +19,7 @@ class SftpClient
   # Closes the SFTP connection and SSH connection if they are open
   # TODO: leave ssh session open...
   def disconnect
+    # raise StandardError.new('fake error')
     @logger.debug 'Closing SFTP connection...'
     @sftp_client.close_channel unless @sftp_client.closed?
     @ssh_session.close unless @ssh_session.closed?

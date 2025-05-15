@@ -9,7 +9,7 @@ module ArgParser
   DEFAULT_OUTPUT_FILE_PATH = File.join(Dir.pwd, 'duplicate_analysis.csv').freeze
 
   DEFAULT_CONFIG_LOCATION = 'config/config.yml'
-  DEFAULT_ELOG_LOCATION = 'logs/error_log.log'
+  DEFAULT_ELOG_LOCATION = 'logs/progress.log'
   DEFAULT_LLOG_LEVEL = Logger::DEBUG
 
   ############################## METHODS #######################################
