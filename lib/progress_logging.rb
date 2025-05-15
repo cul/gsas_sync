@@ -10,7 +10,7 @@ module ProgressLogging
 
   # Opens and returns the elog file object
   def self.initProgressLogging(logs_dir = DEF_DIR, filename = DEF_FN, logger)
-    @step = 0
+    @step = 1
     filepath = "#{logs_dir}/#{filename}"
     logger.debug "Initializing Error Logs at #{filepath}"
     begin
@@ -38,13 +38,18 @@ module ProgressLogging
   end
 
   def self.err(log, err, msg = '')
-    log.puts "\tAn exception was caught:\n\t\tError: #{err}#{"\nMessage: #{msg}" unless msg.empty?}"
+    log.puts "\tAn exception was caught:\n\t\tError: #{err}#{"\n\t\tMessage: #{msg}" unless msg.empty?}"
+  end
+
+  # Like err, but no error object is required
+  def self.warn(log, msg = '', err = nil)
+    log.puts "\tA problem occurred, but execution will continue (for now)..." \
+             "#{"\n\t\tError: #{err}" unless err.nil?}#{"\n\t\tMessage: #{msg}" unless msg.empty?}"
   end
 
   def self.fatal(log, err, msg = '')
-    log.puts "\tA fatal exception was caught:\n\t\tError: #{err}#{unless msg.empty?
-                                                                    "\n\t\tMessage: #{msg}"
-                                                                  end}\nProgram will exit now..."
+    log.puts "\tA fatal exception was caught:\n\t\t" \
+             "Error: #{err}#{"\n\t\tMessage: #{msg}" unless msg.empty?}\nProgram will exit now..."
   end
 
   def self.start_step(log, title, desc = '')

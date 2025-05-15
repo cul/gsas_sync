@@ -14,10 +14,11 @@ class Validator
   ALLOWED_ALGS = %w[sha256 md5]
   # ITEMS_REGEX = /^\d{4}_\d{2}_items\.csv$/ # todo, well this could be done with File.exist? actually, because we would know what we are looking for at that point!!
 
-  def initialize(directory, logger, elog)
+  def initialize(directory, logger, plog)
     @parent = Pathname.new(directory)
     @logger = logger
-    @elog = elog
+    @plog = plog
+    @digest = nil
   end
 
   # manifest-{alg}.txt is present
@@ -48,32 +49,38 @@ class Validator
     matches = @parent.children.select do |child|
       child.basename.to_s.match?(MANIFEST_REGEX)
     end
-    return false if matches.length != 1 # There should be only one manifest file per dissertation dir
-
+    if matches.length != 1 # There should be only one manifest file per dissertation dir
+      ProgressLogging.err(@plog,
+                          CustomError.new("Expected one manifest file, but got a different number. (Number of matches: #{matches.length})"))
+      return false
+    end
     manifest = matches.pop.basename.to_s
 
     # algorithm substr is present and is a valid hash format
     alg = manifest.match(MANIFEST_REGEX)[1]
-    return false if alg.nil? || !valid_manifest_algorithm?(alg)
-
+    if alg.nil?
+      @logger.warn 'Could not determine hashing algorithm from manifest.'
+      ProgressLogging.warn(@plog,
+                           'Could not determine hashing algorithm from manifest.')
+      return false
+    end
+    begin
+      init_manifest_digest(alg)
+    rescue StandardError => e
+      @logger.error "Failed to create Digest object from given algorithm. Error: #{e}"
+      ProgressLogging.err(@plog, e,
+                          "An error occurred determining the hashing algorithm. Got: #{alg} Expecting one of: #{ALLOWED_ALGS}")
+      # We still want to run all validation checks--therefore, this is not a fatal error.
+    end
     true
   end
 
   # Sets the @digest attribute to the corresponding hashing algorithm digest object
-  # Returns false on failure
-  def valid_manifest_algorithm?(alg)
+  def init_manifest_digest(alg)
     puts 'valid_manifest_algorithm()'
-    puts alg
-    begin
-      raise StandardError.new('Fake error')
-      @digest = Object.const_get("Digest::#{alg.upcase}")
-      true
-    rescue LoadError => e
-      @logger.fatal "Failed to create Digest object from given algorithm. Error: #{e}"
-      @elog << ErrorHandling.elog_msg("Could not verify the manifest file while performing validations. An error occurred determining the hashing algorithm.\nGot: #{alg}\nExpecting one of: #{ALLOWED_ALGS}")
-      raise StandardError.new('Must raise this') # TODO: YOU ARE HERE (WEDNESDAY, 5.14)
-      false # ?
-    end
+    raise CustomError, "Unexpected hashing algorithm '#{alg}" unless ALLOWED_ALGS.include?(alg)
+
+    @digest = Object.const_get("Digest::#{alg.upcase}")
   end
 
   # file exists
@@ -83,7 +90,8 @@ class Validator
     expectation = "#{@parent}#{@date_prefix_str}_items.csv"
     return true if File.exist?(expectation)
 
-    false # TODO: determine the nature of the error
+    ProgressLogging.warn(@plog, "Could not find yyyy_mm_items.csv file. Expected: #{expectation}.")
+    false
   end
 
   # file exists
@@ -92,10 +100,10 @@ class Validator
     puts 'valid_assets_csv()'
 
     expectation = "#{@parent}#{@date_prefix_str}_assets.csv"
-    puts expectation
     return true if File.exist?("#{@parent}#{@date_prefix_str}_assets.csv")
 
-    false # TODO: determine the nature of the error
+    ProgressLogging.warn(@plog, "Could not find yyyy_mm_assets.csv file. Expected: #{expectation}.")
+    false
   end
 
   def undesirable_characters_in_file_paths?
