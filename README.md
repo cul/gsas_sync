@@ -30,7 +30,7 @@ sshuttle -r YOUR_UNI@connect.cul.columbia.edu 0.0.0.0/0
 #### Using a VM as a test server:
 Alternatively, you can run your own server to use as the test transfer server. This is nice because you can put whatever you want in the server you spin up, without worrying about access rights or muddying the test transfer server that is maintained by LIT. Here is a brief guide to setting this up:
 1. Install virtual machine software. On mac, we recommend [VMWare Fusion](https://www.vmware.com/products/desktop-hypervisor/workstation-and-fusion) (this will require account creation in order to install). On windows, [WSL2](https://learn.microsoft.com/en-us/windows/wsl/install) would likely be a great option.
-2. Download an ISO appropriate for our needs and spin up a VM. I use an [Ubuntu Live Server](https://ubuntu.com/download/server/arm) image. _Make sure to download the ARM architecture ISO if using a mac with Apple Silicon_. Boot and set up the new VM.
+2. Download an ISO appropriate for our needs and spin up a VM. I use an [Ubuntu Live Server (for ARM)](https://ubuntu.com/download/server/arm) image. _Make sure to download the ARM architecture ISO if using a mac with Apple Silicon_. Boot and set up the new VM.
     - To find the IP address of your new machine, you can use the `ip a` command.
 3. Create an [SSH-keypair](https://docs.oracle.com/en/cloud/cloud-at-customer/occ-get-started/generate-ssh-key-pair.html) on your parent machine. Add your public key to the `authorized_keys` file on the remote host.
     - Method 1 (recommended): Add your key to the remote with the `ssh-copy-id` utility.
