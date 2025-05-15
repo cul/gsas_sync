@@ -19,14 +19,20 @@ class GsasSync
     @logger.debug 'Initialized GsasSync Object'
   end
 
+  def rm_temp_dir
+    FileUtils.rm_rf TEMP_DIR
+  end
+
   def download_files_to_temp_dir
+    rm_temp_dir if File.directory? TEMP_DIR
     @logger.debug('GsasSync#download_files_to_temp_dir(): Entry')
     xfer_server_str = "#{@config['sftp_server']['user']}@#{@config['sftp_server']['host']}"
     ProgressLogging.start_step(@plog, "Downloading files from remote server #{xfer_server_str}")
     begin
       @sftp_client = SftpClient.new(@config, @logger)
       @sftp_client.connect
-      @sftp_client.ls(UPLOADS_DIR)
+      @sftp_client.has_uploads_dir?(UPLOADS_DIR)
+      @sftp_client.ls(UPLOADS_DIR) # TODO: delete?
       @sftp_client.dl_recursive(UPLOADS_DIR, TEMP_DIR)
       @sftp_client.disconnect
     rescue StandardError => e
@@ -58,9 +64,9 @@ class GsasSync
         # TODO: do NOT lazy evaluate (e); we want to be able to list ALL of the validation errors so that ALL errors can be
         # addressed by GSAS at once. Otherwise, there could be a situation where they address an issue, try to transfer again,
         # and it fails again for a novel reason -- better if they can know all the errors at one time.
-        if validator.all_required_files_present? # &&
-          #  validator.undesirable_characters_in_file_paths? &&
-          #  validator.all_accounted_for_in_manifest? &&
+        if validator.all_required_files_present? &
+           validator.no_undesirable_characters_in_file_paths? # &
+          #  validator.all_accounted_for_in_manifest? &
           #  validator.valid_checksums?
           puts 'pass!'
         else

@@ -75,6 +75,13 @@ class SftpClient
     @logger.info("Downloaded files from #{@user}@#{@host}:#{remote_src} -> #{local_dst} ")
   end
 
+  def has_uploads_dir?(directory)
+    # TODO: implement - just check the directory exists by the expected name,
+    # log the error if it does not exist
+    # fatal + exit if this is the case
+    true
+  end
+
   def ls(directory = '.')
     @logger.debug('SftpClient#ls(): Entry')
     puts "#{GsasSync::TERM_PREFIX} `ls -la #{directory}` on remote server :"
