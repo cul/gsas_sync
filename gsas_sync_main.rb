@@ -31,6 +31,8 @@ args => { config_file: config_file, elog_file: elog_file, llog_lvl: llog_lvl}
 # File.new('logs/error_log.txt', 'w')
 
 gsas_sync = GsasSync.new(config_file, elog_file, llog_lvl)
+gsas_sync.send_test_email
+
 # gsas_sync.logger.debug 'debug message'
 # gsas_sync.logger.info 'info'
 # gsas_sync.logger.warn 'warning'
@@ -44,7 +46,10 @@ puts 'valid path' if Cul::PreservationUtils::FilePath.valid_file_path?('a/b/c')
 gsas_sync.download_files_to_temp_dir
 
 temp_dir_path = "#{Pathname.pwd}/temp/"
-gsas_sync.validate_downloaded_files(temp_dir_path)
+unless gsas_sync.validate_downloaded_files(temp_dir_path)
+  puts 'Send failure email'
+  # TODO
+end
 
 puts 'DONE!'
 

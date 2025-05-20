@@ -60,24 +60,35 @@ class GsasSync
           validators.push(Validator.new("#{temp_dir}#{f.basename}/", @logger, @plog))
         end
       end
+    rescue StandardError
+      puts 'rescued tododoododo'
+    end
+    result = true
+
+    begin
       validators.each do |validator|
         # TODO: do NOT lazy evaluate (e); we want to be able to list ALL of the validation errors so that ALL errors can be
         # addressed by GSAS at once. Otherwise, there could be a situation where they address an issue, try to transfer again,
         # and it fails again for a novel reason -- better if they can know all the errors at one time.
-        if validator.all_required_files_present? &
-           validator.no_undesirable_characters_in_file_paths? # &
-          #  validator.all_accounted_for_in_manifest? &
-          #  validator.valid_checksums?
-          puts 'pass!'
-        else
-          puts 'fail!'
-        end
+        next if validator.all_required_files_present? &
+                validator.no_undesirable_characters_in_file_paths? &
+                validator.all_accounted_for_in_manifest? &
+                validator.valid_checksums?
+
+        result = false
       end
     rescue StandardError => e
       @logger.fatal("A fatal error occurred while validating the downloaded files: #{e}. Exiting...")
       ProgressLogging.fatal(@plog, e)
       graceful_exit
     end
+    puts 'validate downloaded files: ' + (result ? 'SUCCESS' : 'FAILURE')
+    result
+  end
+
+  def send_test_email
+    mailer = EmailClient.new(@config)
+    mailer.send_test_email
   end
 
   def graceful_exit

@@ -18,8 +18,8 @@ class Validator
     @parent = Pathname.new(directory)
     @logger = logger
     @plog = plog
-    @manifest_csv_fd = -1
-    @digest = nil
+    @manifest_filename = ''
+    @digest_class = nil
   end
 
   # manifest-{alg}.txt is present
@@ -36,6 +36,7 @@ class Validator
     valid &= valid_assets_csv?
     valid &= File.directory? "#{@parent}data"
     ProgressLogging.log(@plog, '-- Validation Success: All required files present --') if valid
+    puts "all required files present? #{valid}"
     valid
   end
 
@@ -58,6 +59,8 @@ class Validator
     end
     manifest = matches.pop.basename.to_s
 
+    @manifest_filename = manifest
+
     # algorithm substr is present and is a valid hash format
     alg = manifest.match(MANIFEST_REGEX)[1]
     if alg.nil?
@@ -79,10 +82,10 @@ class Validator
 
   # Sets the @digest attribute to the corresponding hashing algorithm digest object
   def init_manifest_digest(alg)
-    puts 'valid_manifest_algorithm()'
-    raise CustomError, "Unexpected hashing algorithm '#{alg}" unless ALLOWED_ALGS.include?(alg)
+    puts 'init_manifest_digest()'
+    raise "Unexpected hashing algorithm '#{alg}" unless ALLOWED_ALGS.include?(alg)
 
-    @digest = Object.const_get("Digest::#{alg.upcase}")
+    @digest_class = Object.const_get("Digest::#{alg.upcase}")
   end
 
   # file exists
@@ -115,7 +118,12 @@ class Validator
   # and logging any errors that are encountered in the progress log
   def no_undesirable_characters_in_file_paths?(directory = @parent)
     valid = valid_file_paths_recursive
-    ProgressLogging.log(@plog, '-- Validation Success: No files or directories contain undesirable characters --')
+    if valid
+      ProgressLogging.log(@plog,
+                          '-- Validation Success: No files or directories contain undesirable characters --')
+    end
+    puts "no undesirable characters in filepath? #{valid}"
+    valid
   end
 
   def valid_file_paths_recursive(directory = @parent)
@@ -144,10 +152,51 @@ class Validator
 
   # VALIDATION RULE 3
   def all_accounted_for_in_manifest?
-    true # TODO: implement
+    @logger.debug 'all_accounted_for_in_manifest?() Entry'
+    if @manifest_filename == ''
+      # TODO: log this - skip
+      puts 'no manifest file!'
+      return false
+    end
+
+    if @digest_class.nil?
+      # TODO: log this - skip
+      puts 'no digest class!'
+      return false
+    end
+
+    result = true
+    array = []
+    @manifest_hash = {}
+    File.open("#{@parent}#{@manifest_filename}", 'r') do |f|
+      array = f.readlines
+    end
+    array.each do |line|
+      checksum, file = line.split
+      file = "#{@parent}#{file.delete_prefix('./')}"
+      unless File.exist?(file)
+        puts "not found: #{file}"
+        result = false
+        continue
+      end
+      @manifest_hash[file] = checksum
+    end
+    puts "all in manifest? #{result}"
+    result
   end
 
   # VALIDATION RULE 4
   def valid_checksums?
+    result = true
+    @manifest_hash.each do |file_path, checksum|
+      next unless @digest_class.file(file_path).hexdigest != checksum
+
+      # TODO: log
+      puts "checkusm doesnt match! #{file_path}"
+      result = false
+    end
+
+    puts "valid checksums? #{result}"
+    result
   end
 end
