@@ -13,42 +13,52 @@ loader.setup # ready!
 
 require 'pathname'
 require 'optparse'
+
 ################################################################################
 ################################ SCRIPT ########################################
 ################################################################################
 
-args = ArgParser.parse_cl_args
-args => { config_file: config_file, elog_file: elog_file, llog_lvl: llog_lvl}
-# puts 'ARG VALUES:'
-# p config_file
-# p elog_file
-# p llog_lvl
-# puts '******************'
-# # Set up error log file
-# File.mkdir('logs') unless File.directory?('logs')
-# File.delete('logs/elog.txt') if File.file?('logs/elog.txt')
+args = GsasSync::ArgParser.parse_cl_args
+args => { log_lvl: log_lvl}
 
-# File.new('logs/error_log.txt', 'w')
+GsasSync::Logger.stdout_log_level = log_lvl
 
-gsas_sync = GsasSync.new(config_file, elog_file, llog_lvl)
-gsas_sync.send_test_email
-
-# gsas_sync.logger.debug 'debug message'
-# gsas_sync.logger.info 'info'
-# gsas_sync.logger.warn 'warning'
-# gsas_sync.logger.error 'error'
-# gsas_sync.logger.fatal 'fatal!'
-# gsas_sync.logger.unknown 'unknown'
-
-# p gsas_sync.config
-puts 'valid path' if Cul::PreservationUtils::FilePath.valid_file_path?('a/b/c')
+gsas_sync = GsasSync.new
 
 gsas_sync.download_files_to_temp_dir
 
-temp_dir_path = "#{Pathname.pwd}/temp/"
-unless gsas_sync.validate_downloaded_files(temp_dir_path)
-  puts 'Send failure email'
-  # TODO
+temp_dir_path = "#{Pathname.pwd}/#{GsasSync::TEMP_DIR}/"
+
+valid = gsas_sync.validate_downloaded_files(temp_dir_path)
+
+unless valid
+  gsas_sync.failure_email
+  gsas_sync.graceful_exit
+  exit(0)
+end
+
+# Remove files from local temp directory and move to final location
+# Remove files from remote host
+# Send success email
+
+puts 'EMAIL AND EXIT' unless valid # TODO: email client
+
+gsas_sync.graceful_exit # TODO: DEV ######################################################
+
+puts "Valid: #{valid}"
+if valid
+  begin
+    gsas_sync.move_temp_files
+  rescue StandardError
+    puts 'uh oh!'
+  end
+  # TODO: remove files from remote server
+  # TODO: send success email?
+  puts 'SUCCESS'
+else
+  puts 'FAILURE'
+  # TODO: clean up
+  # TODO: send failure email
 end
 
 puts 'DONE!'

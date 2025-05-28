@@ -5,25 +5,34 @@ require 'net/sftp'
 
 RSpec.describe SftpClient do
   let(:config) { YAML.load(File.read('spec/fixtures/config.yml'))['config'] }
-  let(:client) { described_class.new(config) }
+  let(:mock_logger) { instance_double(GsasSync::Logger) }
+  let(:mock_local_logger) { instance_double(Logger) }
+  let(:client) { described_class.new(config, mock_logger) }
+
+  before do
+    allow(mock_logger).to receive(:log_all).and_return nil
+    allow(mock_logger).to receive(:progress).and_return nil
+    allow(mock_logger).to receive(:local).and_return mock_local_logger
+    allow(mock_local_logger).to receive(:debug).and_return nil
+    allow(mock_local_logger).to receive(:info).and_return nil
+  end
 
   describe '#connect' do
     let(:mock_sftp) { instance_double(Net::SFTP::Session) }
 
-    it 'Prints message upon success' do
+    it 'Returns nil on success' do
       allow(client).to receive(:sftp_client).and_return(mock_sftp)
       allow(mock_sftp).to receive(:connect!).and_return(true)
-      expect {
-        client.connect
-      }.to output("[gsas_sync] SFTP connection established with test_user@test_sftp_server\n").to_stdout
+      expect(client.connect).to be(nil)
     end
 
-    it 'Prints an exception to stdout if unable to connect to remote host' do
+    it 'Raises an SftpClientError when unable to connect to remote host', focus: true do
       expect {
         client.connect
-      }.to output("[gsas_sync] Failed to connect to test_user@test_sftp_server\n").to_stdout
+      }.to raise_error(GsasSync::Exceptions::SftpClientError)
     end
 
+    # TODO: Here
     it 'Exits if unable to connect to remote host' do
       expect { client.connect }.to raise_error(SystemExit)
     end

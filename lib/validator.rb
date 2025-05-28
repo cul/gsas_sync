@@ -14,12 +14,26 @@ class Validator
   ALLOWED_ALGS = %w[sha256 md5]
   # ITEMS_REGEX = /^\d{4}_\d{2}_items\.csv$/ # todo, well this could be done with File.exist? actually, because we would know what we are looking for at that point!!
 
-  def initialize(directory, logger, plog)
+  attr_accessor :files_present, :no_bad_chars, :good_manifest, :chucksums
+
+  def initialize(directory, logger)
     @parent = Pathname.new(directory)
     @logger = logger
-    @plog = plog
     @manifest_filename = ''
     @digest_class = nil
+  end
+
+  # we want to be able to list ALL of the validation errors so that ALL errors can be
+  # addressed by GSAS at once. Otherwise, there could be a situation where they address an issue, try to transfer again,
+  # and it fails again for a novel reason -- better if they can know all the errors at one time.
+  def run_validations
+    # rescue the errors within these methods, but allow all four to execute
+    @logger.log_all("-- -- Validating files for #{@parent} -- --")
+    @files_present = all_required_files_present?
+    @no_bad_chars = no_undesirable_characters_in_file_paths?
+    @valid_manifest = all_accounted_for_in_manifest?
+    @checksums = valid_checksums?
+    @files_present && @no_bad_chars && @valid_manifest && @checksums
   end
 
   # manifest-{alg}.txt is present
@@ -28,15 +42,14 @@ class Validator
   # data directory is present
   # VALIDATION RULE 1
   def all_required_files_present?
-    @logger.debug('Validator#all_required_files_present(): Entry')
+    @logger.local.debug('Validator#all_required_files_present(): Entry')
     @date_prefix_str = @parent.basename.to_s[0...DATE_PREFIX_LEN]
     valid = true
     valid &= valid_manifest_file?
     valid &= valid_items_csv?
     valid &= valid_assets_csv?
     valid &= File.directory? "#{@parent}data"
-    ProgressLogging.log(@plog, '-- Validation Success: All required files present --') if valid
-    puts "all required files present? #{valid}"
+    @logger.progress '-- Validation Success: All required files present --' if valid
     valid
   end
 
@@ -46,44 +59,50 @@ class Validator
   #   - algorithm substr is present
   #   - algorithm is legit
   def valid_manifest_file?
-    @logger.debug('Validator#valid_manifest_file?(): Entry')
+    @logger.local.debug('Validator#valid_manifest_file?(): Entry')
+    find_manifest_file
+
+    if @manifest_filename == '' # TODO: is this case possible? Wouldn't an exception be raised before this check?
+      @logger.log_all_warn 'An error ocurred loading the manifest file'
+      return false
+    end
+
+    # algorithm substr is present and is a valid hash format
+    alg = @manifest_filename.match(MANIFEST_REGEX)[1]
+    if alg.nil?
+      @logger.log_all_warn('Could not determine hashing algorithm from manifest')
+      return false
+    end
+
+    init_manifest_digest(alg)
+    true
+  rescue StandardError => e
+    @logger.log_all_error('Failed to validate manifest file', e)
+    false
+  end
+
+  # Sets the @digest attribute to the corresponding hashing algorithm digest object
+  def find_manifest_file
+    @logger.local.debug 'find_manifest_file(): Entry'
     # temp\**YYYY_MM_dissertations**\YYYY_MM_manifest-{algorithm}.txt
     # # file is present
     matches = @parent.children.select do |child|
       child.basename.to_s.match?(MANIFEST_REGEX)
     end
     if matches.length != 1 # There should be only one manifest file per dissertation dir
-      ProgressLogging.warn(@plog,
-                           "Expected one manifest file, but got a different number. (Number of matches: #{matches.length})")
-      return false
+      raise GsasSync::Exceptions::ValidationError,
+            "Expected one manifest file, but got a different number. (Number of matches: #{matches.length})"
     end
-    manifest = matches.pop.basename.to_s
-
-    @manifest_filename = manifest
-
-    # algorithm substr is present and is a valid hash format
-    alg = manifest.match(MANIFEST_REGEX)[1]
-    if alg.nil?
-      @logger.warn 'Could not determine hashing algorithm from manifest.'
-      ProgressLogging.warn(@plog,
-                           'Could not determine hashing algorithm from manifest.')
-      return false
-    end
-    begin
-      init_manifest_digest(alg)
-    rescue StandardError => e
-      @logger.error "Failed to create Digest object from given algorithm. Error: #{e}"
-      ProgressLogging.warn(@plog,
-                           "An error occurred determining the hashing algorithm. Got: #{alg} Expecting one of: #{ALLOWED_ALGS}", e)
-      # We still want to run all validation checks--therefore, this is not a fatal error.
-    end
-    true
+    @manifest_filename = matches.pop.basename.to_s
   end
 
-  # Sets the @digest attribute to the corresponding hashing algorithm digest object
+  # Can raise an exception if unable to make a valid Digest Object
   def init_manifest_digest(alg)
-    puts 'init_manifest_digest()'
-    raise "Unexpected hashing algorithm '#{alg}" unless ALLOWED_ALGS.include?(alg)
+    @logger.local.debug 'init_manifest_digest(): Entry'
+    unless ALLOWED_ALGS.include?(alg)
+      raise GsasSync::Exceptions::ValidationError,
+            "Unexpected hashing algorithm '#{alg}'"
+    end
 
     @digest_class = Object.const_get("Digest::#{alg.upcase}")
   end
@@ -91,23 +110,23 @@ class Validator
   # file exists
   # matching date_time prefix
   def valid_items_csv?
-    @logger.debug 'Validator#valid_items_csv(): Entry'
+    @logger.local.debug 'Validator#valid_items_csv(): Entry'
     expectation = "#{@parent}#{@date_prefix_str}_items.csv"
     return true if File.exist?(expectation)
 
-    ProgressLogging.warn(@plog, "Could not find yyyy_mm_items.csv file. Expected: #{expectation}.")
+    @logger.log_all_warn("Could not find yyyy_mm_items.csv file. Expected: #{expectation}.")
     false
   end
 
   # file exists
   # matching date_time prefix
   def valid_assets_csv?
-    puts 'valid_assets_csv()'
+    @logger.local.debug 'valid_assets_csv()'
 
     expectation = "#{@parent}#{@date_prefix_str}_assets.csv"
     return true if File.exist?("#{@parent}#{@date_prefix_str}_assets.csv")
 
-    ProgressLogging.warn(@plog, "Could not find yyyy_mm_assets.csv file. Expected: #{expectation}.")
+    @logger.log_all_warn("Could not find yyyy_mm_assets.csv file. Expected: #{expectation}.")
     false
   end
 
@@ -118,14 +137,16 @@ class Validator
   # and logging any errors that are encountered in the progress log
   def no_undesirable_characters_in_file_paths?(directory = @parent)
     valid = valid_file_paths_recursive
-    if valid
-      ProgressLogging.log(@plog,
-                          '-- Validation Success: No files or directories contain undesirable characters --')
-    end
-    puts "no undesirable characters in filepath? #{valid}"
+    @logger.progress('-- Validation Success: No files or directories contain undesirable characters --') if valid
     valid
+  rescue StandardError => e
+    @logger.log_all_error('An unexpected error ocurred while validating filepaths for undesirable characters.', e)
+    false
   end
 
+  # Validate each file and directory recursively, logging any that fail the validation
+  # to the progress log
+  # This is a recursive algorithm
   def valid_file_paths_recursive(directory = @parent)
     valid = Cul::PreservationUtils::FilePath.valid_file_path? directory.basename
     log_validated_filepath(directory, valid)
@@ -141,31 +162,29 @@ class Validator
     valid
   end
 
-  def log_validated_filepath(fp, res) # rubocop:disable Naming/MethodParameterName
-    if res
-      @logger.debug "Validated #{fp.basename}"
+  def log_validated_filepath(fp, valid) # rubocop:disable Naming/MethodParameterName
+    if valid
+      @logger.log_all "Validated for undesirable characters: #{fp.basename}"
     else
-      @logger.warn "Invalid characters found: #{fp.basename}"
-      ProgressLogging.warn(@plog, "#{fp.basename} contains invalid characters.")
+      @logger.log_all_warn "Invalid characters found: #{fp.basename}"
     end
   end
 
   # VALIDATION RULE 3
   def all_accounted_for_in_manifest?
-    @logger.debug 'all_accounted_for_in_manifest?() Entry'
+    @logger.local.debug 'all_accounted_for_in_manifest?() Entry'
     if @manifest_filename == ''
-      # TODO: log this - skip
-      puts 'no manifest file!'
+      @logger.log_all_warn('Invalid manifest file. Unable to validate that all files in manifest are present.')
       return false
     end
 
     if @digest_class.nil?
-      # TODO: log this - skip
+      @logger.log_all_warn('No valid checksum algorithm. Unable to validate that all files in manifest are present.')
       puts 'no digest class!'
       return false
     end
 
-    result = true
+    valid = true
     array = []
     @manifest_hash = {}
     File.open("#{@parent}#{@manifest_filename}", 'r') do |f|
@@ -175,28 +194,31 @@ class Validator
       checksum, file = line.split
       file = "#{@parent}#{file.delete_prefix('./')}"
       unless File.exist?(file)
-        puts "not found: #{file}"
-        result = false
+        valid = false
         continue
       end
       @manifest_hash[file] = checksum
     end
-    puts "all in manifest? #{result}"
-    result
+
+    @logger.progress('-- Validation Success: All files in manifest are accounted for --') if valid
+    valid
   end
 
   # VALIDATION RULE 4
   def valid_checksums?
-    result = true
+    unless @valid_manifest # TODO: Log
+      @logger.log_all_warn('No valid manifest file. Unable to validate checksums.')
+      return false
+    end
+    valid = true
     @manifest_hash.each do |file_path, checksum|
       next unless @digest_class.file(file_path).hexdigest != checksum
 
-      # TODO: log
-      puts "checkusm doesnt match! #{file_path}"
-      result = false
+      @logger.log_all_warn("Checksum does not match manifest value: #{file_path}")
+      valid = false
     end
 
-    puts "valid checksums? #{result}"
-    result
+    @logger.progress('-- Validation Success: All checksum values match manifest --') if valid
+    valid
   end
 end

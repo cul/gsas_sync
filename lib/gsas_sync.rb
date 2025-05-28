@@ -3,102 +3,99 @@
 require 'rainbow'
 
 class GsasSync
-  # include ProgressLogging
-
-  TERM_PREFIX = '[gsas_sync]'
   TEMP_DIR = 'temp'
   UPLOADS_DIR = 'uploads'
 
-  attr_accessor :config, :logger
-
-  def initialize(config_file, plog_file, llog_lvl)
-    @config = load_config_file(config_file)
-    @logger = Logger.new($stdout, llog_lvl, progname: 'gsas_sync')
-    Logging.format_logger @logger
-    @plog = ProgressLogging.initProgressLogging(*File.split(plog_file), @logger)
-    @logger.debug 'Initialized GsasSync Object'
+  def initialize
+    GsasSync::Logger.stdout_logger.debug('Initialized GsasSync Instance')
   end
 
-  def rm_temp_dir
+  def move_temp_files
+    destination = GsasSync::Config.storage['dev_directory']
+    Pathname(TEMP_DIR).each_child do |child_directory|
+      puts child_directory.basename
+      FileUtils.mv("#{FileUtils.pwd}/#{TEMP_DIR}/#{child_directory.basename}",
+                   "#{destination}/#{child_directory.basename}")
+    end
     FileUtils.rm_rf TEMP_DIR
   end
 
+  # Attempts to download files from the remote server to a temporary directory
+  # Will handle any exceptions that occur, including fatal error
   def download_files_to_temp_dir
-    rm_temp_dir if File.directory? TEMP_DIR
-    @logger.debug('GsasSync#download_files_to_temp_dir(): Entry')
-    xfer_server_str = "#{@config['sftp_server']['user']}@#{@config['sftp_server']['host']}"
-    ProgressLogging.start_step(@plog, "Downloading files from remote server #{xfer_server_str}")
+    xfer_server = GsasSync::Config.sftp_server_str
+    GsasSync::Logger.stdout_logger.debug('GsasSync#download_files_to_temp_dir(): Entry')
+    GsasSync::Logger.begin_step('Download files from remote', "Downloading files from remote server #{xfer_server}")
+
+    FileUtils.rm_rf TEMP_DIR if File.directory? TEMP_DIR
     begin
-      @sftp_client = SftpClient.new(@config, @logger)
-      @sftp_client.connect
-      @sftp_client.has_uploads_dir?(UPLOADS_DIR)
-      @sftp_client.ls(UPLOADS_DIR) # TODO: delete?
-      @sftp_client.dl_recursive(UPLOADS_DIR, TEMP_DIR)
-      @sftp_client.disconnect
+      attempt_download
     rescue StandardError => e
-      @logger.fatal("An error ocurred downloading files from the remote server. Error: #{e}. Exiting...")
-      ProgressLogging.fatal(@plog, e,
-                            "while downloading files from the remote server (#{xfer_server_str})")
+      GsasSync::Logger.log_all_fatal("An error ocurred downloading files from the remote server. Error: #{e}. Exiting...")
       graceful_exit
     end
-    ProgressLogging.log(@plog,
-                        "Downloaded contents of 'uploads/' directory from remote host to local temporary directory:")
-    Dir.entries(TEMP_DIR).each { |f| ProgressLogging.log @plog, "\t - #{f}" }
+    GsasSync::Logger.progress('Successful transfer from remote host to local temporary directory')
+  end
+
+  # Creates an SFTP session and attempts to download files
+  # Raises an exception if any error occurs, which should be caught by the caller
+  def attempt_download
+    @sftp_client = SftpClient.new
+    @sftp_client.connect
+    unless @sftp_client.uploads_dir?
+      raise GsasSync::Exceptions::SftpClientError, 'Remote transfer server does not have an uploads directory'
+    end
+
+    @sftp_client.ls(UPLOADS_DIR) # TODO: dev only
+    @sftp_client.dl_recursive(UPLOADS_DIR, TEMP_DIR)
+    @sftp_client.disconnect
   end
 
   def validate_downloaded_files(temp_dir_path)
-    @logger.debug('GsasSync#validate_downloaded_files(): Entry')
-    ProgressLogging.start_step(@plog, 'Validating downloaded files')
-    begin
-      # Add any directories that match the yyyy_mm_dissertations/ pattern to an array
-      # Validate each in turn
-      temp_dir = Pathname.new(temp_dir_path)
-      validators = []
-      temp_dir.children.each do |f|
-        if f.basename.to_s.match?(Validator::DISSERTATION_DIR_REGEX)
-          puts "#{temp_dir}#{f.basename}/"
-          validators.push(Validator.new("#{temp_dir}#{f.basename}/", @logger, @plog))
-        end
-      end
-    rescue StandardError
-      puts 'rescued tododoododo'
-    end
+    GsasSync::Logger.stdout_logger.debug('GsasSync#validate_downloaded_files(): Entry')
+    GsasSync::Logger.begin_step('Validating downloaded files')
+
+    validators = init_validators(temp_dir_path)
+    raise GsasSync::Exceptions::ValidationError, 'Unable to locate any dissertation directory' if validators.empty?
+
     result = true
+    validators.each do |validator|
+      next if validator.run_validations
 
-    begin
-      validators.each do |validator|
-        # TODO: do NOT lazy evaluate (e); we want to be able to list ALL of the validation errors so that ALL errors can be
-        # addressed by GSAS at once. Otherwise, there could be a situation where they address an issue, try to transfer again,
-        # and it fails again for a novel reason -- better if they can know all the errors at one time.
-        next if validator.all_required_files_present? &
-                validator.no_undesirable_characters_in_file_paths? &
-                validator.all_accounted_for_in_manifest? &
-                validator.valid_checksums?
-
-        result = false
-      end
-    rescue StandardError => e
-      @logger.fatal("A fatal error occurred while validating the downloaded files: #{e}. Exiting...")
-      ProgressLogging.fatal(@plog, e)
-      graceful_exit
+      result = false
     end
-    puts 'validate downloaded files: ' + (result ? 'SUCCESS' : 'FAILURE')
+    GsasSync::Logger.log_all('Finished running validations for all downloaded files')
     result
+  rescue StandardError => e
+    GsasSync::Logger.log_all_fatal("An unexpected fatal error occurred while validating the downloaded files: #{e}. Unable to proceed. Exiting...")
+    graceful_exit
   end
 
-  def send_test_email
+  # Identify dissertation directories that were downloaded into the temporary
+  # location and create validator instances for each of them
+  # Returns an array of validator objects
+  def init_validators(temp_dir_path)
+    # Add any directories that match the yyyy_mm_dissertations/ pattern
+    temp_dir = Pathname.new(temp_dir_path)
+    validators = []
+    temp_dir.children.each do |f|
+      if f.basename.to_s.match?(Validator::DISSERTATION_DIR_REGEX)
+        puts "#{temp_dir}#{f.basename}/"
+        validators.push(Validator.new("#{temp_dir}#{f.basename}/", @logger))
+      end
+    end
+    validators
+  end
+
+  def send_test_email(recipient)
     mailer = EmailClient.new(@config)
-    mailer.send_test_email
+    mailer.send_test_email recipient
   end
 
   def graceful_exit
+    GsasSync::Logger.log_all 'Gracefully shutting down...'
+    @sftp_client&.disconnect
+    GsasSync::Logger.close_progress_log_file
     exit(1)
-  end
-
-  private
-
-  def load_config_file(config_file)
-    config_contents = File.read(config_file) # from IO: Also closes the stream
-    @config = YAML.load(config_contents)['config']
   end
 end
