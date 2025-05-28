@@ -87,15 +87,27 @@ class GsasSync
     validators
   end
 
+  def send_failure_email
+    # TODO: close the log file in order to add it as attachment
+    GsasSync::Logger.close_progress_log_file
+    mail_client.send_failure_email_all
+  end
+
   def send_test_email(recipient)
     mailer = EmailClient.new(@config)
     mailer.send_test_email recipient
   end
 
   def graceful_exit
-    GsasSync::Logger.log_all 'Gracefully shutting down...'
+    GsasSync::Logger.stdout_logger.info 'Gracefully shutting down...'
     @sftp_client&.disconnect
     GsasSync::Logger.close_progress_log_file
     exit(1)
+  end
+
+  private
+
+  def mail_client
+    @mail_client ||= EmailClient.new # TODO: do we need to close this?
   end
 end

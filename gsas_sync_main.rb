@@ -21,6 +21,7 @@ require 'optparse'
 args = GsasSync::ArgParser.parse_cl_args
 args => { log_lvl: log_lvl}
 
+# TODO: There should be a better way to do this
 GsasSync::Logger.stdout_log_level = log_lvl
 
 gsas_sync = GsasSync.new
@@ -31,11 +32,11 @@ temp_dir_path = "#{Pathname.pwd}/#{GsasSync::TEMP_DIR}/"
 
 valid = gsas_sync.validate_downloaded_files(temp_dir_path)
 
-unless valid
-  gsas_sync.failure_email
-  gsas_sync.graceful_exit
-  exit(0)
-end
+# unless valid
+gsas_sync.send_failure_email
+gsas_sync.graceful_exit
+exit(0)
+# end
 
 # Remove files from local temp directory and move to final location
 # Remove files from remote host
