@@ -81,7 +81,7 @@ class GsasSync
     temp_dir.children.each do |f|
       if f.basename.to_s.match?(Validator::DISSERTATION_DIR_REGEX)
         puts "#{temp_dir}#{f.basename}/"
-        validators.push(Validator.new("#{temp_dir}#{f.basename}/", @logger))
+        validators.push(Validator.new("#{temp_dir}#{f.basename}/"))
       end
     end
     validators
