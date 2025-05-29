@@ -44,7 +44,7 @@ class GsasSync::Logger
     end
 
     def begin_step(title, description = '')
-      stdout_logger.info("Step: #{@progress_step}.) #{title}#{' -- ' unless description.empty?}#{description}\n")
+      stdout_logger.info("Step: #{@progress_step}.) #{title}#{' -- ' unless description.empty?}#{description}")
       progress_log << pl_begin_step(@progress_step, title, description)
       @progress_step += 1
     end
