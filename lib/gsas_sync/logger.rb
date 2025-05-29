@@ -34,7 +34,7 @@ class GsasSync::Logger
 
     def log_all_error(message, err)
       stdout_logger.warn(message)
-      stdout.warn(err)
+      stdout_logger.warn(err)
       progress_log << pl_error(message, err)
     end
 
@@ -43,13 +43,21 @@ class GsasSync::Logger
       progress_log << pl_warn(message)
     end
 
+    def begin_step(title, description = '')
+      stdout_logger.info("Step: #{@progress_step}.) #{title}#{' -- ' unless description.empty?}#{description}\n")
+      progress_log << pl_begin_step(@progress_step, title, description)
+      @progress_step += 1
+    end
+
     def progress(message)
       progress_log << "#{time_prefix}\t#{message}\n"
     end
 
-    def begin_step(title, description = '')
-      progress_log << pl_begin_step(@progress_step, title, description)
-      @progress_step += 1
+    def progress_log_dir_contents(directory, message = '')
+      progress(message.empty? ? "Contents of '#{directory}' directory:" : message)
+      Dir.glob('**/*', base: directory).each do |child|
+        progress_log << "\t\t - #{child}\n"
+      end
     end
 
     def close_progress_log_file
@@ -86,7 +94,7 @@ class GsasSync::Logger
         severity_str = rainbowize_severity_str(severity)
         datetime_str = Rainbow(datetime).silver.faint
         progname_str = Rainbow(progname).cyan.bright
-        "#{severity_str} (#{datetime_str}) - #{progname_str} : #{msg}\n"
+        "#{severity_str}\t(#{datetime_str}) - #{progname_str} : #{msg}\n"
       end
     end
 

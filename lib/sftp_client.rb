@@ -36,7 +36,6 @@ class SftpClient
   end
 
   def sftp_client
-    # raise 'test error'
     @sftp_client ||= Net::SFTP::Session.new(ssh_session)
   rescue StandardError => e
     raise GsasSync::Exceptions::SftpClientError, "Error trying to start an SFTP session. #{error_string(e)}"
@@ -52,7 +51,7 @@ class SftpClient
   def dl_recursive(remote_src, local_dst) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength
     GsasSync::Logger.log_all "Beginning SFTP download: [remote]/#{remote_src} -> [local]/#{local_dst}"
     begin
-      @sftp_client.download!(remote_src, local_dst, recursive: true) do |event, _downloader, *args|
+      sftp_client.download!(remote_src, local_dst, recursive: true) do |event, _downloader, *args|
         case event
         when :open
           # args[0] : file metadata
@@ -79,12 +78,24 @@ class SftpClient
     GsasSync::Logger.log_all("Downloaded files from #{@user}@#{@host}:#{remote_src}/ -> #{local_dst}/")
   end
 
+  # rm_recursive uses an open @sftp_client
   def rm_recursive
-    # TODO: implement function to remove all copied files from sftp server
+    sftp_client.dir.glob('uploads/', '**/*') do |entry|
+      puts "current entry: #{entry.name}"
+      next if ['.', '..'].include?(entry.name)
+
+      if entry.directory?
+        puts "rm-ing directory #{entry.name}!"
+        # @sftp_client.rmdir!(entry.name)           # TODO: uncomment when ready
+      else # entry.file? #=> true
+        puts "rm-ing file #{entry.name}!"
+        # @sftp_client.remove!(entry.name)          # TODO: uncomment when ready
+      end
+    end
   end
 
   def uploads_dir?
-    @sftp_client.dir.foreach('.') do |entry|
+    sftp_client.dir.foreach('.') do |entry|
       return true if entry.name == 'uploads' && entry.directory?
     end
     false
@@ -92,7 +103,7 @@ class SftpClient
 
   def ls(directory = '.')
     GsasSync::Logger.stdout_logger.info "`ls -la #{directory}` on remote server :"
-    @sftp_client.dir.foreach(directory) do |entry|
+    sftp_client.dir.foreach(directory) do |entry|
       GsasSync::Logger.stdout_logger.info "\t#{entry.longname}"
     end
   rescue StandardError => e

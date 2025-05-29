@@ -5,4 +5,5 @@ module GsasSync::Exceptions
 
   class SftpClientError < GsasError; end
   class ValidationError < GsasError; end
+  class EmailError < GsasError; end
 end

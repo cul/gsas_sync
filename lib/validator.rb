@@ -7,24 +7,35 @@ require 'cul/preservation_utils'
 # The validator class is capable of validating a yyyy_mm_dissertations/ directory
 # contains all of the files and adheres to all validation rules
 # @parent : the yyyy_mm_dissertations/ directory under examination
+# @manifest_filename:
+# manifest-{alg}.txt is present
+# yyyy_mm_items.csv is present
+# yyyy_mm_assets.csv is present
+# data directory is present
+# VALIDAITON RULES
+# 1.0 : All required files present
+# 1.1 : The manifest file exists and has an accepted algorithm in it
+# 1.2 : An yyyy_mm_items.csv file with a matching prefix exists
+# 1.3 : An yyyy_mm_assets.csv file with a matching prefix exists
+# 2.0 : No undesireable characters are present in any of the file/directory names
 class Validator
   DATE_PREFIX_LEN = 7
   DISSERTATION_DIR_REGEX = /^\d{4}_\d{2}_dissertations$/
   MANIFEST_REGEX = /^manifest-([a-zA-Z0-9]+)\.txt$/
-  ALLOWED_ALGS = %w[sha256 md5]
-  # ITEMS_REGEX = /^\d{4}_\d{2}_items\.csv$/ # todo, well this could be done with File.exist? actually, because we would know what we are looking for at that point!!
+  ALLOWED_ALGS = %w[sha256 md5].freeze # TODO: update this list of expected Checksum algorithms as needed
 
-  attr_accessor :files_present, :no_bad_chars, :good_manifest, :chucksums
+  # Allow the caller to determine exactly what did and did not pass
+  attr_reader :files_present, :no_bad_chars, :good_manifest, :chucksums
 
   def initialize(directory)
-    @parent = Pathname.new(directory)
+    @parent = Pathname.new(directory) # yyyy_mm_dissertations
     @manifest_filename = ''
     @digest_class = nil
   end
 
-  # we want to be able to list ALL of the validation errors so that ALL errors can be
-  # addressed by GSAS at once. Otherwise, there could be a situation where they address an issue, try to transfer again,
-  # and it fails again for a novel reason -- better if they can know all the errors at one time.
+  # The Starting point for the validations process
+  # Runs each validation check and returns true if all of the validation checks passed
+  # False otherwise
   def run_validations
     # rescue the errors within these methods, but allow all four to execute
     GsasSync::Logger.log_all("-- -- Validating files for #{@parent} -- --")
@@ -35,10 +46,6 @@ class Validator
     @files_present && @no_bad_chars && @valid_manifest && @checksums
   end
 
-  # manifest-{alg}.txt is present
-  # yyyy_mm_items.csv is present
-  # yyyy_mm_assets.csv is present
-  # data directory is present
   # VALIDATION RULE 1
   def all_required_files_present?
     GsasSync::Logger.stdout_logger.debug('Validator#all_required_files_present(): Entry')
@@ -52,12 +59,8 @@ class Validator
     valid
   end
 
-  # side effect: if the manifest is present, sets @manifest_csv_fd and @digest attributes
-  # manifest is valid if:
-  #   - a manifest file exists
-  #   - algorithm substr is present
-  #   - algorithm is legit
-  def valid_manifest_file?
+  # VALIDATION RULE 1.1
+  def valid_manifest_file? # rubocop:disable Metrics/MethodLength
     GsasSync::Logger.stdout_logger.debug('Validator#valid_manifest_file?(): Entry')
     find_manifest_file
 
@@ -80,11 +83,9 @@ class Validator
     false
   end
 
-  # Sets the @digest attribute to the corresponding hashing algorithm digest object
+  # Side effet: sets the @manifest_filename instance variable on success
   def find_manifest_file
     GsasSync::Logger.stdout_logger.debug 'find_manifest_file(): Entry'
-    # temp\**YYYY_MM_dissertations**\YYYY_MM_manifest-{algorithm}.txt
-    # # file is present
     matches = @parent.children.select do |child|
       child.basename.to_s.match?(MANIFEST_REGEX)
     end
@@ -95,7 +96,7 @@ class Validator
     @manifest_filename = matches.pop.basename.to_s
   end
 
-  # Can raise an exception if unable to make a valid Digest Object
+  # Side effect: sets the @digest_class instance variable on success
   def init_manifest_digest(alg)
     GsasSync::Logger.stdout_logger.debug 'init_manifest_digest(): Entry'
     unless ALLOWED_ALGS.include?(alg)
@@ -106,8 +107,7 @@ class Validator
     @digest_class = Object.const_get("Digest::#{alg.upcase}")
   end
 
-  # file exists
-  # matching date_time prefix
+  # VALIDATION RULE 1.2
   def valid_items_csv?
     GsasSync::Logger.stdout_logger.debug 'Validator#valid_items_csv(): Entry'
     expectation = "#{@parent}#{@date_prefix_str}_items.csv"
@@ -117,8 +117,7 @@ class Validator
     false
   end
 
-  # file exists
-  # matching date_time prefix
+  # VALIDATION RULE 1.3
   def valid_assets_csv?
     GsasSync::Logger.stdout_logger.debug 'valid_assets_csv()'
 
@@ -130,8 +129,6 @@ class Validator
   end
 
   # VALIDATION RULE 2
-  # Validate that each item in the given directory does not include undesireable characters
-  # in its full file path (parent directories and basename).
   # This method recursively checks nested directories, visiting each item
   # and logging any errors that are encountered in the progress log
   def no_undesirable_characters_in_file_paths?(directory = @parent)
@@ -149,7 +146,6 @@ class Validator
 
   # Validate each file and directory recursively, logging any that fail the validation
   # to the progress log
-  # This is a recursive algorithm
   def valid_file_paths_recursive(directory = @parent)
     valid = Cul::PreservationUtils::FilePath.valid_file_path? directory.basename
     log_validated_filepath(directory, valid)
@@ -174,26 +170,18 @@ class Validator
   end
 
   # VALIDATION RULE 3
+  # This also builds the @manifest_hash map (filename => checksum)
   def all_accounted_for_in_manifest?
     GsasSync::Logger.stdout_logger.debug 'all_accounted_for_in_manifest?() Entry'
-    if @manifest_filename == ''
-      GsasSync::Logger.log_all_warn('Invalid manifest file. Unable to validate that all files in manifest are present.')
-      return false
-    end
-
-    if @digest_class.nil?
-      GsasSync::Logger.log_all_warn('No valid checksum algorithm. Unable to validate that all files in manifest are present.')
-      puts 'no digest class!'
-      return false
-    end
+    return false unless valid_manifest_and_digest_instance_variables
 
     valid = true
-    array = []
+    manifest_lines = []
     @manifest_hash = {}
     File.open("#{@parent}#{@manifest_filename}", 'r') do |f|
-      array = f.readlines
+      manifest_lines = f.readlines
     end
-    array.each do |line|
+    manifest_lines.each do |line|
       checksum, file = line.split
       file = "#{@parent}#{file.delete_prefix('./')}"
       unless File.exist?(file)
@@ -205,6 +193,19 @@ class Validator
 
     GsasSync::Logger.progress('-- Validation Success: All files in manifest are accounted for --') if valid
     valid
+  end
+
+  def valid_manifest_and_digest_instance_variables
+    if @manifest_filename == ''
+      GsasSync::Logger.log_all_warn('Invalid manifest file. Unable to validate that all files in manifest are present.')
+      return false
+    end
+    if @digest_class.nil?
+      GsasSync::Logger.log_all_warn('No valid checksum algorithm. Unable to validate that all files in manifest are present.')
+      puts 'no digest class!'
+      return false
+    end
+    true
   end
 
   # VALIDATION RULE 4
