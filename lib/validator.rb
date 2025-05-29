@@ -13,11 +13,13 @@ require 'cul/preservation_utils'
 # yyyy_mm_assets.csv is present
 # data directory is present
 # VALIDAITON RULES
-# 1.0 : All required files present
+# 1.  : All required files present
 # 1.1 : The manifest file exists and has an accepted algorithm in it
 # 1.2 : An yyyy_mm_items.csv file with a matching prefix exists
 # 1.3 : An yyyy_mm_assets.csv file with a matching prefix exists
-# 2.0 : No undesireable characters are present in any of the file/directory names
+# 2.  : No undesireable characters are present in any of the file/directory names
+# 3.  : All files listed in the manifest file are present in the downloaded directory
+# 4.  : The checksums listed for each file in the manifest match the checksums for what was downloaded
 class Validator
   DATE_PREFIX_LEN = 7
   DISSERTATION_DIR_REGEX = /^\d{4}_\d{2}_dissertations$/
@@ -37,8 +39,7 @@ class Validator
   # Runs each validation check and returns true if all of the validation checks passed
   # False otherwise
   def run_validations
-    # rescue the errors within these methods, but allow all four to execute
-    GsasSync::Logger.log_all("-- -- Validating files for #{@parent} -- --")
+    GsasSync::Logger.log_all("-- -- Validating files for #{@parent.basename}/ -- --")
     @files_present = all_required_files_present?
     @no_bad_chars = no_undesirable_characters_in_file_paths?
     @valid_manifest = all_accounted_for_in_manifest?
@@ -176,21 +177,18 @@ class Validator
     return false unless valid_manifest_and_digest_instance_variables
 
     valid = true
-    manifest_lines = []
     @manifest_hash = {}
-    File.open("#{@parent}#{@manifest_filename}", 'r') do |f|
-      manifest_lines = f.readlines
-    end
-    manifest_lines.each do |line|
-      checksum, file = line.split
-      file = "#{@parent}#{file.delete_prefix('./')}"
-      unless File.exist?(file)
-        valid = false
-        continue
+    File.open("#{@parent}#{@manifest_filename}", 'r') do |file_handle|
+      file_handle.each_line do |line|
+        checksum, file = line.split
+        file = "#{@parent}#{file.delete_prefix('./')}"
+        unless File.exist?(file)
+          valid = false
+          continue
+        end
+        @manifest_hash[file] = checksum
       end
-      @manifest_hash[file] = checksum
     end
-
     GsasSync::Logger.progress('-- Validation Success: All files in manifest are accounted for --') if valid
     valid
   end
