@@ -35,6 +35,12 @@ class SftpClient
     GsasSync::Logger.stdout_logger.info "Connection with #{@user}@#{@host} closed."
   end
 
+  def closed?
+    return true if @sftp_client.nil?
+
+    @sftp_client.closed?
+  end
+
   def sftp_client
     @sftp_client ||= Net::SFTP::Session.new(ssh_session)
   rescue StandardError => e
@@ -48,6 +54,7 @@ class SftpClient
   end
 
   # See "Progress Monitoring" section of docs for Net::SFTP::Operations::Download
+  # remote_src and local_dst are absolute path strings TODO : change this w File.basename(path)
   def dl_recursive(remote_src, local_dst) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength
     GsasSync::Logger.log_all "Beginning SFTP download: [remote]/#{remote_src} -> [local]/#{local_dst}"
     begin
@@ -79,19 +86,25 @@ class SftpClient
   end
 
   # rm_recursive uses an open @sftp_client
+  # TODO : you cannot just do entry.name in the block passed to glob...each
+  # you need THE FULL PATH TO THE FILE on the remote, so we need to make that string
   def rm_recursive
+    return
     sftp_client.dir.glob('uploads/', '**/*') do |entry|
       puts "current entry: #{entry.name}"
       next if ['.', '..'].include?(entry.name)
 
       if entry.directory?
         puts "rm-ing directory #{entry.name}!"
-        # @sftp_client.rmdir!(entry.name)           # TODO: uncomment when ready
+        @sftp_client.rmdir(entry.name).wait # TODO: uncomment when ready
       else # entry.file? #=> true
         puts "rm-ing file #{entry.name}!"
-        # @sftp_client.remove!(entry.name)          # TODO: uncomment when ready
+        @sftp_client.remove(entry.name).wait # TODO: uncomment when ready
       end
     end
+  rescue StandardError => e
+    puts e
+    exit(1)
   end
 
   def uploads_dir?
@@ -101,6 +114,7 @@ class SftpClient
     false
   end
 
+  # directory : string name of the directory (not an absolute path)
   def ls(directory = '.')
     GsasSync::Logger.stdout_logger.info "`ls -la #{directory}` on remote server :"
     sftp_client.dir.foreach(directory) do |entry|

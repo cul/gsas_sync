@@ -10,14 +10,13 @@ class GsasSync
     FAILURE_SUBJECT = 'Failure: Gsas Sync process could not complete the file transfer'
     FAILURE_BODY = "The Gsas Sync process failed to complete the transfer process.\nA log file has been attached "\
     "detailing what occurred.\nPlease address any validation errors and contact the DLST to attempt the transfer " \
-    "again.\nThe files were not deleted on the remote transfer server."
+    'again. The files were not deleted on the remote transfer server.'
 
     def initialize
       @server = GsasSync::Config.mail_server['host']
       @port = GsasSync::Config.mail_server['port']
       @sender = GsasSync::Config.mail_server['sender_address']
       @recipients = GsasSync::Config.mail_server['recipients']
-      puts "recips #{@recipients}"
       @log_file = "#{GsasSync::Config.logs_directory}progress.log"
       init_mail_client
     end

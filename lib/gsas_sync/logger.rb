@@ -24,23 +24,23 @@ class GsasSync::Logger
 
     def log_all(message)
       stdout_logger.info(message)
-      progress_log << "#{time_prefix}\t #{message}\n"
+      progress_log << "#{time_prefix}\t #{message}\n" unless @progress_log.closed?
     end
 
     def log_all_fatal(message)
       stdout_logger.fatal(message)
-      progress_log << pl_fatal(message)
+      progress_log << pl_fatal(message) unless @progress_log.closed?
     end
 
     def log_all_error(message, err)
       stdout_logger.warn(message)
       stdout_logger.warn(err)
-      progress_log << pl_error(message, err)
+      progress_log << pl_error(message, err) unless @progress_log.closed?
     end
 
     def log_all_warn(message)
       stdout_logger.warn(message)
-      progress_log << pl_warn(message)
+      progress_log << pl_warn(message) unless @progress_log.closed?
     end
 
     def begin_step(title, description = '')
@@ -50,18 +50,29 @@ class GsasSync::Logger
     end
 
     def progress(message)
-      progress_log << "#{time_prefix}\t#{message}\n"
+      progress_log << "#{time_prefix}\t#{message}\n" unless @progress_log.closed?
     end
 
     def progress_log_dir_contents(directory, message = '')
+      return if @progress_log.closed?
+
       progress(message.empty? ? "Contents of '#{directory}' directory:" : message)
       Dir.glob('**/*', base: directory).each do |child|
         progress_log << "\t\t - #{child}\n"
       end
     end
 
+    def progress_log_append(message)
+      return progress(message) unless @progress_log.closed?
+
+      filepath = Pathname.new("#{GsasSync::Config.logs_directory}progress.log")
+      File.open(filepath, 'a') do |file|
+        file << "#{time_prefix}\t#{message}\n"
+      end
+    end
+
     def close_progress_log_file
-      progress_log&.close
+      @progress_log&.close
     end
 
     private
@@ -73,7 +84,6 @@ class GsasSync::Logger
       # TODO : implement log rotation policy
       @progress_step = 1
       filepath = Pathname.new("#{GsasSync::Config.logs_directory}progress.log")
-      puts "Filepath is #{filepath}"
       File.delete(filepath) if File.file?(filepath)
       # FileUtils.rm_rf(filepath.dirname) if File.directory?(filepath.dirname)
       FileUtils.mkdir(filepath.dirname) unless File.directory?(filepath.dirname)
