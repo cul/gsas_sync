@@ -24,7 +24,7 @@ class GsasSync
   # Move the downloaded files from the temporary directory to the configurable'storage' destination (where on the
   # production server to store the files for eventually preservation).
   # This is done by moving each dissertation directory (yyyy_mm_dd_disserations/) to the final storage directory.
-  def move_temp_files
+  def move_temp_files # TODO : DELETE
     GsasSync::Logger.stdout_logger.debug 'GsasSync#move_temp_files: Entry'
     source = "#{FileUtils.pwd}/#{TEMP_DIR}"
     destination = GsasSync::Config.storage['dev_directory'] # This will be an absolute path
@@ -38,7 +38,7 @@ class GsasSync
           "An error occurred trying to move the downloaded files to the final storage directory on the local server: Error: #{e}")
   end
 
-  def rm_temp_dir
+  def rm_temp_dir # TODO : DELETE
     FileUtils.rm_rf(@temp_dir) if File.directory?(@temp_dir)
   rescue StandardError => e
     raise(Exceptions::GsasError,
@@ -124,7 +124,7 @@ class GsasSync
   end
 
   def send_success_email
-    GsasSync::Logger.progress('')
+    GsasSync::Logger.progress('') # TODO: summary?
     GsasSync::Logger.close_progress_log_file
     mail_client.send_success_email_all
   rescue StandardError => e
@@ -164,6 +164,6 @@ class GsasSync
   private
 
   def mail_client
-    @mail_client ||= EmailClient.new # TODO: do we need to close this?
+    @mail_client ||= EmailClient.new(GsasSync::Logger.log_file_name) # TODO: do we need to close this?
   end
 end

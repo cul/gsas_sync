@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'time'
+
 # GsasSync::Logger controls all logging that occurs while the script is executing.
 # There are two types of logs: the standard out logger (stdout_logger) and the
 # progress logger (progress_logger). stdout_logger logs messages related to the
@@ -11,6 +13,10 @@
 # The class follows the singleton pattern, ensuring that there is only ever one
 # instance of either the stdout_logger or progress_logger while the script is executing.
 class GsasSync::Logger
+  MAX_NUM_LOG_FILES = 10
+  LOG_FILE_REGEX = /(\d{12})-progress\.log$/ # YYMMDDhhmmss-progress.log
+  TIME_FORMAT_STR = '%y%m%d%H%M%S'
+
   class << self
     attr_accessor :stdout_log_level # This should be set to the value captured by ArgParser
 
@@ -75,19 +81,66 @@ class GsasSync::Logger
       @progress_log&.close
     end
 
+    def log_file_name
+      @pathname.basename
+    end
+
     private
 
     # Creates a new progress log file in the location defined in the configuration
     # Returns the open log file.
     # N.B. The progress log file must be closed with close_progress_log_file before the program terminates
     def init_progress_log
-      # TODO : implement log rotation policy
       @progress_step = 1
-      filepath = Pathname.new("#{GsasSync::Config.logs_directory}progress.log")
-      File.delete(filepath) if File.file?(filepath)
-      # FileUtils.rm_rf(filepath.dirname) if File.directory?(filepath.dirname)
-      FileUtils.mkdir(filepath.dirname) unless File.directory?(filepath.dirname)
-      File.open(filepath, 'w')
+      @pathname = Pathname.new("#{GsasSync::Config.logs_directory}/#{generate_log_file_name}")
+      rotate_logs
+      FileUtils.mkdir(@pathname.dirname) unless File.directory?(@pathname.dirname)
+      File.open(@pathname, 'w')
+    end
+
+    # Generates a log file name based on the current time
+    # Format: YYMMDDhhmmss-progress.log
+    def generate_log_file_name
+      name = "#{Time.now.strftime(TIME_FORMAT_STR)}-progress.log"
+      if File.exist? "#{GsasSync::Config.logs_directory}/#{name}" # Avoid naming collisions
+        sleep(1)
+        return generate_log_file_name
+      end
+      name
+    end
+
+    # Deletes the oldest log file if there are MAX_NUM_LOG_FILES log files
+    def rotate_logs
+      logs_dir = Pathname.new("#{FileUtils.pwd}/#{GsasSync::Config.logs_directory}")
+      children = logs_dir.children
+      return if children.length < MAX_NUM_LOG_FILES
+
+      oldest = children.first # Arbitrary
+      logs_dir.children.each do |child|
+        next if child == oldest
+
+        oldest = child if older?(child, oldest)
+      end
+      puts "rotating logs: deleting #{oldest.basename}"
+      oldest.delete
+    end
+
+    # Returns true if the child is determined to be older than the target
+    # child and target are Pathname objects
+    def older?(child, target)
+      child_time_stamp = Time.strptime(LOG_FILE_REGEX.match(child.basename.to_s)[1], TIME_FORMAT_STR)
+      target_time_stamp = Time.strptime(LOG_FILE_REGEX.match(target.basename.to_s)[1], TIME_FORMAT_STR)
+      res = nil
+      puts "IN OLDER? - comparing #{child_time_stamp} <=> #{target_time_stamp}"
+      p child_time_stamp
+      p target_time_stamp
+      case child_time_stamp <=> target_time_stamp
+      when -1 then res = child_time_stamp
+      when 1 then res = target_time_stamp
+      when 0 then raise 'Unknown error occurred: somehow, two log files have the same exact timestamp...'
+      end
+      puts "---> #{res}"
+      res
     end
 
     def init_stdout_logger

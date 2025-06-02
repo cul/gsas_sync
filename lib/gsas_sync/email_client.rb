@@ -12,12 +12,12 @@ class GsasSync
     "detailing what occurred.\nPlease address any validation errors and contact the DLST to attempt the transfer " \
     'again. The files were not deleted on the remote transfer server.'
 
-    def initialize
+    def initialize(log_file_name)
       @server = GsasSync::Config.mail_server['host']
       @port = GsasSync::Config.mail_server['port']
       @sender = GsasSync::Config.mail_server['sender_address']
       @recipients = GsasSync::Config.mail_server['recipients']
-      @log_file = "#{GsasSync::Config.logs_directory}progress.log"
+      @log_file = "#{GsasSync::Config.logs_directory}/#{log_file_name}"
       init_mail_client
     end
 
