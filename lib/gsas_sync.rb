@@ -6,12 +6,19 @@ class GsasSync
   TEMP_DIR = 'temp'
   UPLOADS_DIR = 'uploads'
 
-  # temp_dir : the name of the directory where downloaded files will be initially stored
-  # uploads_dir : the name of the remote directory containing the yyyy_mm_dissertations directories
+  # @preservation_dir : the name of the local directory where files will be downloaded to
+  # @uploads_dir : the name of the remote directory containing the yyyy_mm_dissertations directories
   def initialize(temp_dir = TEMP_DIR, uploads_dir = UPLOADS_DIR)
     GsasSync::Logger.stdout_logger.debug('Initialized GsasSync Instance')
-    @temp_dir = "#{FileUtils.pwd}/#{temp_dir}/"
-    @uplaods_dir = "#{FileUtils.pwd}/#{uploads_dir}/"
+    @preservation_dir = Config.storage['dev_directory'] # TODO: change to actual preservation dir
+    @temp_dir = "/#{@preservation_dir}.temp/" # TODO : this must have a leading '/' to work properly in sftp
+    @uploads_dir = uploads_dir
+  end
+
+  # Renames the temporary 'dissertations.temp' directory to just 'dissertations'
+  def rename_temp_dir(src = @temp_dir, dst = @preservation_dir)
+    Logger.stdout_logger.debug 'GsasSync#rename_temp_dir: Entry'
+    FileUtils.mv src, dst
   end
 
   # Move the downloaded files from the temporary directory to the configurable'storage' destination (where on the
@@ -43,7 +50,6 @@ class GsasSync
   def download_files_to_temp_dir
     GsasSync::Logger.stdout_logger.debug('GsasSync#download_files_to_temp_dir(): Entry')
 
-    FileUtils.rm_rf @temp_dir if File.directory? @temp_dir
     attempt_download
     GsasSync::Logger.progress('Successful transfer from remote host to local temporary directory')
   rescue StandardError => e
@@ -58,8 +64,13 @@ class GsasSync
       raise GsasSync::Exceptions::SftpClientError, 'Remote transfer server does not have an uploads directory'
     end
 
-    @sftp_client.ls(File.basename(@uplaods_dir))
-    @sftp_client.dl_recursive(File.basename(@uplaods_dir), @temp_dir)
+    if @sftp_client.dissertations_dir_already_exists?(@preservation_dir, @uploads_dir)
+      raise Exceptions::SftpClientError,
+            'The dissertations directory we are trying to download already exists on the local machine.'
+    end
+
+    @sftp_client.ls(@uploads_dir)
+    @sftp_client.dl_recursive(@uploads_dir, @temp_dir)
   end
 
   # Create Validator objects for each yyyy_mm_dissertations directory and runs all validations, returning the result

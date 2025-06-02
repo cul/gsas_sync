@@ -30,7 +30,7 @@ class Validator
   attr_reader :files_present, :no_bad_chars, :good_manifest, :chucksums
 
   def initialize(directory)
-    @parent = Pathname.new(directory) # yyyy_mm_dissertations
+    @parent = Pathname.new(directory) # yyyy_mm_dissertations # TODO : rename to something like "dissertation_dir_name" - parent implies this variable holds the parent of whatever we care about -- but it actually is the thing we care about.
     @manifest_filename = ''
     @digest_class = nil
   end

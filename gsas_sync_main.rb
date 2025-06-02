@@ -39,19 +39,24 @@ unless valid
 end
 
 GsasSync::Logger.begin_step('Moving the downloaded files to the final destination on local server')
-GsasSync::Logger.log_all('All downloaded files were validated. Sending successn notification.')
-
 begin
-  gsas_sync.move_temp_files
-  gsas_sync.rm_remote_files
-  gsas_sync.rm_temp_dir
+  gsas_sync.rename_temp_dir
 rescue StandardError => e
   GsasSync::Logger.log_all_error(
-    'An error occurred while trying to move the downloaded files or delete them from the remote transfer server. The script will terminate...', e
+    'An error occurred while trying to move the downloaded files. The script will terminate...', e
   )
   gsas_sync.email_and_exit_failure
 end
 
+GsasSync::Logger.begin_step('Deleting the downloaded files on the remote SFTP server')
+begin
+  gsas_sync.rm_remote_files
+rescue StandardError => e
+  GsasSync::Logger.log_all_error(
+    'An error occurred while trying to delete them from the remote transfer server. The script will terminate...', e
+  )
+  gsas_sync.email_and_exit_failure
+end
 # Not for developers:
 # When sending the success email, the progress log file handle will be closed in order to add it as an attachment.
 # The following will close the file handle: GsasSync#send_success_email, GsasSync#send_failure_email

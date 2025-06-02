@@ -89,7 +89,7 @@ class SftpClient
   # TODO : you cannot just do entry.name in the block passed to glob...each
   # you need THE FULL PATH TO THE FILE on the remote, so we need to make that string
   def rm_recursive
-    return
+    return # TODO : fix implementation (see test program)
     sftp_client.dir.glob('uploads/', '**/*') do |entry|
       puts "current entry: #{entry.name}"
       next if ['.', '..'].include?(entry.name)
@@ -110,6 +110,24 @@ class SftpClient
   def uploads_dir?
     sftp_client.dir.foreach('.') do |entry|
       return true if entry.name == 'uploads' && entry.directory?
+    end
+    false
+  end
+
+  # Returns true if there is a yyyy_mm_dissertations directory/ies in the local server preservation directory that has
+  # the same name as the yyyy_mm_dissertations directory in the uploads/ directory of the remote SFTP server.
+  # If the directory of that name is already on the local machine, perhaps it has already been downloaded.
+  # params:
+  #  - preservation_dir : absolute path of the preservations directory on the local machine
+  #  - uploads : name of the directory on the remote that has the dissertations directories
+  def dissertations_dir_already_exists?(preservation_dir, uploads = 'uploads')
+    GsasSync::Logger.stdout_logger.debug('dissertations_dir_already_exists(): Entry')
+    matches = []
+    sftp_client.dir.foreach(uploads) do |entry|
+      matches.push(entry.name) if entry.name.match?(Validator::DISSERTATION_DIR_REGEX)
+    end
+    matches.each do |match|
+      return true if File.directory?("#{preservation_dir}#{match}")
     end
     false
   end
