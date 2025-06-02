@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'time'
-
 # GsasSync::Logger controls all logging that occurs while the script is executing.
 # There are two types of logs: the standard out logger (stdout_logger) and the
 # progress logger (progress_logger). stdout_logger logs messages related to the
@@ -125,21 +123,20 @@ class GsasSync::Logger
       oldest.delete
     end
 
-    # Returns true if the child is determined to be older than the target
+    # Returns true if the time_a is determined to be older than time_b
     # child and target are Pathname objects
-    def older?(child, target)
-      child_time_stamp = Time.strptime(LOG_FILE_REGEX.match(child.basename.to_s)[1], TIME_FORMAT_STR)
-      target_time_stamp = Time.strptime(LOG_FILE_REGEX.match(target.basename.to_s)[1], TIME_FORMAT_STR)
-      res = nil
-      puts "IN OLDER? - comparing #{child_time_stamp} <=> #{target_time_stamp}"
-      p child_time_stamp
-      p target_time_stamp
-      case child_time_stamp <=> target_time_stamp
-      when -1 then res = child_time_stamp
-      when 1 then res = target_time_stamp
+    def older?(time_a, time_b)
+      time_stamp_a = Time.strptime(LOG_FILE_REGEX.match(time_a.basename.to_s)[1], TIME_FORMAT_STR)
+      time_stamp_b = Time.strptime(LOG_FILE_REGEX.match(time_b.basename.to_s)[1], TIME_FORMAT_STR)
+      puts "IN OLDER? - comparing #{time_stamp_a} <=> #{time_stamp_b}"
+      p time_stamp_a
+      p time_stamp_b
+      case time_stamp_a <=> time_stamp_b
+      when -1 then res = true
+      when 1 then res = false
       when 0 then raise 'Unknown error occurred: somehow, two log files have the same exact timestamp...'
       end
-      puts "---> #{res}"
+      puts "---> #{res ? time_stamp_a : time_stamp_b}"
       res
     end
 

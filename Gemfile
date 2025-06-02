@@ -21,3 +21,5 @@ gem 'ed25519', '>= 1.2', '< 2.0', require: false
 gem 'rainbow', '~> 3.1'
 
 gem 'mail', '~> 2.8', '>= 2.8.1'
+
+gem 'time', '~> 0.4.1'
