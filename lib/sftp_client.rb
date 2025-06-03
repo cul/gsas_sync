@@ -53,6 +53,21 @@ class SftpClient
     raise GsasSync::Exceptions::SftpClientError, "Error trying to start an SSH session. #{error_string(e)}"
   end
 
+  # For each yyyy_mm_dissertations/ directory on the remote src, download it to
+  # local_dst/yyyy_mm_dissertations.temp/
+  def dl_dissertation_dirs_to_temp(remote_uploads_dir, local_dissertations_dir)
+    GsasSync::Logger.stdout_logger.debug('dl_dissertation_dirs_to_temp(): Entry')
+    remote_dissertation_directories = []
+    sftp_client.dir.foreach(remote_uploads_dir) do |entry|
+      remote_dissertation_directories.push(entry.name) if entry.name.match?(Validator::DISSERTATION_DIR_REGEX)
+    end
+    remote_dissertation_directories.each do |dir_name|
+      dl_recursive("#{remote_uploads_dir}/#{dir_name}", "#{local_dissertations_dir}/#{dir_name}.temp")
+    end
+  rescue StandardError => e
+    raise e
+  end
+
   # See "Progress Monitoring" section of docs for Net::SFTP::Operations::Download
   # remote_src and local_dst are absolute path strings TODO : change this w File.basename(path)
   def dl_recursive(remote_src, local_dst) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength
@@ -114,19 +129,19 @@ class SftpClient
     false
   end
 
-  # Returns true if there is a yyyy_mm_dissertations directory/ies in the local server preservation directory that has
-  # the same name as the yyyy_mm_dissertations directory in the uploads/ directory of the remote SFTP server.
+  # Returns true if there is any yyyy_mm_dissertations directory in the local server preservation directory that has
+  # the same name as a yyyy_mm_dissertations directory in the uploads/ directory of the remote SFTP server.
   # If the directory of that name is already on the local machine, perhaps it has already been downloaded.
   # params:
   #  - preservation_dir : absolute path of the preservations directory on the local machine
-  #  - uploads : name of the directory on the remote that has the dissertations directories
+  #  - uploads : name of the directory on the remote that contains the yyyy_mm_dissertations directories
   def dissertations_dir_already_exists?(preservation_dir, uploads = 'uploads')
     GsasSync::Logger.stdout_logger.debug('dissertations_dir_already_exists(): Entry')
-    matches = []
+    remote_dissertation_directories = []
     sftp_client.dir.foreach(uploads) do |entry|
-      matches.push(entry.name) if entry.name.match?(Validator::DISSERTATION_DIR_REGEX)
+      remote_dissertation_directories.push(entry.name) if entry.name.match?(Validator::DISSERTATION_DIR_REGEX)
     end
-    matches.each do |match|
+    remote_dissertation_directories.each do |match|
       return true if File.directory?("#{preservation_dir}#{match}")
     end
     false

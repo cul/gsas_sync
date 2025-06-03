@@ -119,7 +119,6 @@ class GsasSync::Logger
 
         oldest = child if older?(child, oldest)
       end
-      puts "rotating logs: deleting #{oldest.basename}"
       oldest.delete
     end
 
@@ -128,15 +127,11 @@ class GsasSync::Logger
     def older?(time_a, time_b)
       time_stamp_a = Time.strptime(LOG_FILE_REGEX.match(time_a.basename.to_s)[1], TIME_FORMAT_STR)
       time_stamp_b = Time.strptime(LOG_FILE_REGEX.match(time_b.basename.to_s)[1], TIME_FORMAT_STR)
-      puts "IN OLDER? - comparing #{time_stamp_a} <=> #{time_stamp_b}"
-      p time_stamp_a
-      p time_stamp_b
       case time_stamp_a <=> time_stamp_b
       when -1 then res = true
       when 1 then res = false
       when 0 then raise 'Unknown error occurred: somehow, two log files have the same exact timestamp...'
       end
-      puts "---> #{res ? time_stamp_a : time_stamp_b}"
       res
     end
 

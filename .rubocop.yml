@@ -7,3 +7,6 @@ AllCops:
 # For standalone Ruby scripts, we don't need the Rails cops that are built into rubocul, so we'll disable them.
 Rails:
   Enabled: false
+
+Metrics/MethodLength:
+  Max: 20
