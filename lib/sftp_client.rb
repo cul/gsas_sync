@@ -3,8 +3,6 @@
 require 'net/sftp'
 
 class SftpClient
-  include GsasSync::Utils
-
   def initialize
     sftp_server = GsasSync::Config.sftp_server
     @host = sftp_server['host']
@@ -169,6 +167,12 @@ class SftpClient
   rescue StandardError => e
     raise GsasSync::Exceptions::SftpClientError,
           "Error while trying to run `ls -la` on remote transfer server. #{error_string(e)}"
+  end
+
+  private
+
+  def error_string(err)
+    "Error [#{err.class.name}] : #{err.message}"
   end
 end
 
