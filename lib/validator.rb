@@ -193,7 +193,7 @@ class Validator
         file = "#{@parent}/#{file.delete_prefix('./')}"
         unless File.exist?(file)
           valid = false
-          continue
+          next
         end
         @manifest_hash[file] = checksum
       end
