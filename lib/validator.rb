@@ -29,8 +29,11 @@ class Validator
   # Allow the caller to determine exactly what did and did not pass
   attr_reader :files_present, :no_bad_chars, :good_manifest, :chucksums
 
-  def initialize(directory)
-    @parent = Pathname.new(directory) # yyyy_mm_dissertations # TODO : rename to something like "dissertation_dir_name" - parent implies this variable holds the parent of whatever we care about -- but it actually is the thing we care about.
+  # Params:
+  #  - dissertations_directory: Pathname object representing a yyyy_mm_dissertations.temp directory
+  def initialize(dissertations_directory)
+    GsasSync::Logger.stdout_logger.debug('Validator#initialize(): Entry')
+    @parent = dissertations_directory # yyyy_mm_dissertations # TODO : rename to something like "dissertation_dir_name" - parent implies this variable holds the parent of whatever we care about -- but it actually is the thing we care about.
     @manifest_filename = ''
     @digest_class = nil
   end
@@ -55,13 +58,17 @@ class Validator
     valid &= valid_manifest_file?
     valid &= valid_items_csv?
     valid &= valid_assets_csv?
-    valid &= File.directory? "#{@parent}data"
-    GsasSync::Logger.progress '-- Validation Success: All required files present --' if valid
+    valid &= File.directory? "#{@parent}/data"
+    if valid
+      GsasSync::Logger.progress '-- ✅ Validation Success: All required files present --'
+    else
+      GsasSync::Logger.progress '-- ️❌  Validation Failure: All required files present --'
+    end
     valid
   end
 
   # VALIDATION RULE 1.1
-  def valid_manifest_file? # rubocop:disable Metrics/MethodLength
+  def valid_manifest_file?
     GsasSync::Logger.stdout_logger.debug('Validator#valid_manifest_file?(): Entry')
     find_manifest_file
 
@@ -111,7 +118,7 @@ class Validator
   # VALIDATION RULE 1.2
   def valid_items_csv?
     GsasSync::Logger.stdout_logger.debug 'Validator#valid_items_csv(): Entry'
-    expectation = "#{@parent}#{@date_prefix_str}_items.csv"
+    expectation = "#{@parent}/#{@date_prefix_str}_items.csv"
     return true if File.exist?(expectation)
 
     GsasSync::Logger.log_all_warn("Could not find yyyy_mm_items.csv file. Expected: #{expectation}.")
@@ -122,8 +129,8 @@ class Validator
   def valid_assets_csv?
     GsasSync::Logger.stdout_logger.debug 'valid_assets_csv()'
 
-    expectation = "#{@parent}#{@date_prefix_str}_assets.csv"
-    return true if File.exist?("#{@parent}#{@date_prefix_str}_assets.csv")
+    expectation = "#{@parent}/#{@date_prefix_str}_assets.csv"
+    return true if File.exist?(expectation)
 
     GsasSync::Logger.log_all_warn("Could not find yyyy_mm_assets.csv file. Expected: #{expectation}.")
     false
@@ -133,9 +140,11 @@ class Validator
   # This method recursively checks nested directories, visiting each item
   # and logging any errors that are encountered in the progress log
   def no_undesirable_characters_in_file_paths?(directory = @parent)
-    valid = valid_file_paths_recursive
+    valid = valid_file_paths_recursive(directory)
     if valid
-      GsasSync::Logger.progress('-- Validation Success: No files or directories contain undesirable characters --')
+      GsasSync::Logger.progress('-- ✅ Validation Success: No files or directories contain undesirable characters --')
+    else
+      GsasSync::Logger.progress('-- ❌ Validation Failure: No files or directories contain undesirable characters --')
     end
     valid
   rescue StandardError => e
@@ -164,9 +173,9 @@ class Validator
 
   def log_validated_filepath(fp, valid) # rubocop:disable Naming/MethodParameterName
     if valid
-      GsasSync::Logger.log_all "Validated for undesirable characters: #{fp.basename}"
+      GsasSync::Logger.log_all "✔️ Validated for undesirable characters: #{fp.basename}"
     else
-      GsasSync::Logger.log_all_warn "Invalid characters found: #{fp.basename}"
+      GsasSync::Logger.log_all_warn "‼️ Invalid characters found: #{fp.basename}"
     end
   end
 
@@ -178,10 +187,10 @@ class Validator
 
     valid = true
     @manifest_hash = {}
-    File.open("#{@parent}#{@manifest_filename}", 'r') do |file_handle|
+    File.open("#{@parent}/#{@manifest_filename}", 'r') do |file_handle|
       file_handle.each_line do |line|
         checksum, file = line.split
-        file = "#{@parent}#{file.delete_prefix('./')}"
+        file = "#{@parent}/#{file.delete_prefix('./')}"
         unless File.exist?(file)
           valid = false
           continue
@@ -189,7 +198,11 @@ class Validator
         @manifest_hash[file] = checksum
       end
     end
-    GsasSync::Logger.progress('-- Validation Success: All files in manifest are accounted for --') if valid
+    if valid
+      GsasSync::Logger.progress('-- ✅ Validation Success: All files in manifest are accounted for --')
+    else
+      GsasSync::Logger.progress('-- ❌ Validation Failure: All files in manifest are accounted for --')
+    end
     valid
   end
 
@@ -219,8 +232,11 @@ class Validator
       GsasSync::Logger.log_all_warn("Checksum does not match manifest value: #{file_path}")
       valid = false
     end
-
-    GsasSync::Logger.progress('-- Validation Success: All checksum values match manifest --') if valid
+    if valid
+      GsasSync::Logger.progress('-- ✅ Validation Success: All checksum values match manifest --')
+    else
+      GsasSync::Logger.progress('-- ❌  Validation Success: All checksum values match manifest --')
+    end
     valid
   end
 end

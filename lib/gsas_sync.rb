@@ -10,18 +10,26 @@ class GsasSync
   # @uploads_dir : the name of the remote directory containing the yyyy_mm_dissertations directories
   def initialize(temp_dir = TEMP_DIR, uploads_dir = UPLOADS_DIR)
     GsasSync::Logger.stdout_logger.debug('Initialized GsasSync Instance')
-    @preservation_dir = Config.storage['dev_directory'] # TODO: change 'dev_directory' to 'directory' for actual preservation dir
-    # @temp_dir = "/#{@preservation_dir}/" # TODO : this must be an abs path (have a leading '/') to work properly in sftp
+    @preservation_dir = Config.storage['directory'] # TODO: change 'dev_directory' to 'directory' for actual preservation dir
     @uploads_dir = uploads_dir
+    @downloaded_dirs = [] # Array of strings for each yyyy_mm_dissertations directory that was downloaded. Will be defined after downloading.
   end
 
   # TODO : this actually isn't the best strategy; the 'dissertations' directory will contain multiple 'yyyy_mm_dissertations'
   #        directories within it. We should instead download to this dissertations directory but save in a folder called
   #        'yyyy_mm_dissertations.temp'. Then the rename_temp_dir function will rename that to 'yyyy_mm_dissertations.temp'
   # Renames the temporary 'dissertations.temp' directory to just 'dissertations'
-  def rename_temp_dir(src = @temp_dir, dst = @preservation_dir)
+  # TODO : herem (Monday)
+  def rename_temp_dir(src = @temp_dir, dst = @preservation_dir) # TODO : DELETE
     Logger.stdout_logger.debug 'GsasSync#rename_temp_dir: Entry'
     FileUtils.mv src, dst
+  end
+
+  def rename_temp_dirs
+    Logger.stdout_logger.debug 'GsasSync#rename_temp_dirs: Entry'
+    @downloaded_dirs.each do |dir_name|
+      FileUtils.mv "#{@preservation_dir}/#{dir_name}.temp", "#{@preservation_dir}/#{dir_name}"
+    end
   end
 
   # Move the downloaded files from the temporary directory to the configurable'storage' destination (where on the
@@ -30,7 +38,7 @@ class GsasSync
   def move_temp_files # TODO : DELETE
     GsasSync::Logger.stdout_logger.debug 'GsasSync#move_temp_files: Entry'
     source = "#{FileUtils.pwd}/#{TEMP_DIR}"
-    destination = GsasSync::Config.storage['dev_directory'] # This will be an absolute path
+    destination = GsasSync::Config.storage['directory'] # This will be an absolute path
     GsasSync::Logger.log_all "Moving files from #{source} to #{destination}"
     Pathname.new(source).each_child do |child_directory|
       FileUtils.mkdir(destination) unless File.directory?(destination)
@@ -41,8 +49,11 @@ class GsasSync
           "An error occurred trying to move the downloaded files to the final storage directory on the local server: Error: #{e}")
   end
 
-  def rm_temp_dir # TODO : DELETE
-    FileUtils.rm_rf(@temp_dir) if File.directory?(@temp_dir)
+  def rm_temp_dirs
+    GsasSync::Logger.stdout_logger.debug('GsasSync#rm_remp_dirs(): Entry')
+    @downloaded_dirs.each do |dir|
+      FileUtils.rm_rf("#{@preservation_dir}/#{dir}.temp") if File.directory?("#{@preservation_dir}/#{dir}.temp")
+    end
   rescue StandardError => e
     raise(Exceptions::GsasError,
           "An error occurred removing the temporary download directory on the local server. Error: #{e}")
@@ -60,6 +71,7 @@ class GsasSync
     email_and_exit_failure
   end
 
+  # Side effect: sets the @downloaded_dirs array based on what was downloaded by the @sftp_client
   def attempt_download
     @sftp_client = SftpClient.new
     @sftp_client.connect
@@ -74,12 +86,14 @@ class GsasSync
 
     @sftp_client.ls(@uploads_dir)
     @sftp_client.dl_dissertation_dirs_to_temp(@uploads_dir, @preservation_dir)
+    @downloaded_dirs = @sftp_client.dissertation_dirs_array
   end
 
   # Verifies that the preservation directory described in the configuration file exists on the local machine
-  # Raises a GsasSync::Exceptions::GsasError if it is not present
+  # Returns nil. Raises a GsasSync::Exceptions::GsasError if it is not present.
   def verify_dissertations_directory_exists
-    return if File.directory? GsasSync::Config.storage['directory']
+    puts GsasSync::Config.storage['directory']
+    return if File.directory? @preservation_dir # TODO: change to directory
 
     raise GsasSync::Exceptions::GsasError,
           'The directory described in the config file where downloaded files should be stored does not exist on the local machine.'
@@ -98,7 +112,7 @@ class GsasSync
 
       valid = false
     end
-    GsasSync::Logger.log_all("Finished running validations for all downloaded files: #{valid ? 'SUCCESS' : 'FAILURE'}")
+    GsasSync::Logger.log_all("Finished running validations for all downloaded files: #{valid ? 'SUCCESS ✅' : 'FAILURE ❌'}")
     valid
   rescue StandardError => e
     GsasSync::Logger.log_all_fatal("An unexpected fatal error occurred while validating the downloaded files: #{e}. Unable to proceed. Exiting...")
@@ -117,18 +131,17 @@ class GsasSync
   # Identify dissertation directories that were downloaded into the temporary location and create validator instances
   # for each of them. Returns an array of validator objects
   def init_validators
-    temp_dir = Pathname.new(@temp_dir)
+    GsasSync::Logger.stdout_logger.debug('GsasSync#init_validators(): Entry')
     validators = []
-    temp_dir.children.each do |f|
-      if f.basename.to_s.match?(Validator::DISSERTATION_DIR_REGEX)
-        validators.push(Validator.new("#{temp_dir}#{f.basename}/"))
-      end
+    @downloaded_dirs.each do |dir|
+      validators.push(Validator.new(Pathname.new("#{@preservation_dir}/#{dir}.temp")))
     end
     validators
   end
 
   def send_failure_email
     GsasSync::Logger.close_progress_log_file
+    rm_temp_dirs
     mail_client.send_failure_email_all
   rescue StandardError => e
     raise(GsasSync::Exceptions::EmailError,
@@ -136,7 +149,7 @@ class GsasSync
   end
 
   def send_success_email
-    GsasSync::Logger.progress('') # TODO: summary?
+    GsasSync::Logger.progress('at the top of GsasSync#send_success_email()') # TODO: summary?
     GsasSync::Logger.close_progress_log_file
     mail_client.send_success_email_all
   rescue StandardError => e
@@ -146,7 +159,7 @@ class GsasSync
 
   def email_and_exit_failure
     GsasSync::Logger.log_all_fatal('Sending failure email notification. This will close the local progress.log file...')
-    # TODO : remove dissertations.temp directory if it exists
+    # TODO : remove dissertations/ ... .temp directory/ies if exists !!!! (YOU are here Tuesady afternoon)
     send_failure_email
   rescue StandardError => e
     GsasSync::Logger.stdout_logger.fatal("#{e.class} - #{e.message}")

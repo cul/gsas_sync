@@ -40,7 +40,7 @@ end
 
 GsasSync::Logger.begin_step('Moving the downloaded files to the final destination on local server')
 begin
-  gsas_sync.rename_temp_dir
+  gsas_sync.rename_temp_dirs
 rescue StandardError => e
   GsasSync::Logger.log_all_error(
     'An error occurred while trying to move the downloaded files. The script will terminate...', e
@@ -64,6 +64,7 @@ end
 # You can reopen the file for appending with GsasSync::Logger::append (this will close the file again before returning)
 GsasSync::Logger.begin_step('Sending Email Notifications', 'This is the final step')
 GsasSync::Logger.progress('Summary of what was downloaded from the remote transfer server:')
-GsasSync::Logger.progress_log_dir_contents(GsasSync::Config.storage['dev_directory'],
+# TODO: do this based on the gsas_sync objects @dissertation_dirs instance variable!
+GsasSync::Logger.progress_log_dir_contents(GsasSync::Config.storage['directory'],
                                            'Successfully downloaded the following files:')
 gsas_sync.email_and_exit_success

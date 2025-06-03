@@ -55,17 +55,27 @@ class SftpClient
 
   # For each yyyy_mm_dissertations/ directory on the remote src, download it to
   # local_dst/yyyy_mm_dissertations.temp/
+  # Side effect: sets the @dissertation_dirs instance variable
   def dl_dissertation_dirs_to_temp(remote_uploads_dir, local_dissertations_dir)
     GsasSync::Logger.stdout_logger.debug('dl_dissertation_dirs_to_temp(): Entry')
-    remote_dissertation_directories = []
+    @dissertation_dirs = []
+    # Determine how many yyyy_mm_dissertations directories are present on the remote
     sftp_client.dir.foreach(remote_uploads_dir) do |entry|
-      remote_dissertation_directories.push(entry.name) if entry.name.match?(Validator::DISSERTATION_DIR_REGEX)
+      @dissertation_dirs.push(entry.name) if entry.name.match?(Validator::DISSERTATION_DIR_REGEX)
     end
-    remote_dissertation_directories.each do |dir_name|
+    # Download each of those remote yyyy_mm_dissertations directories to local as .temp directories
+    @dissertation_dirs.each do |dir_name|
       dl_recursive("#{remote_uploads_dir}/#{dir_name}", "#{local_dissertations_dir}/#{dir_name}.temp")
     end
   rescue StandardError => e
     raise e
+  end
+
+  # The @dissertation_dirs instance variable is set by SftpClient#dl_dissertation_dirs_to_temp
+  def dissertation_dirs_array
+    return @dissertation_dirs unless @dissertation_dirs.nil?
+
+    raise GsasSync::Exceptions::SftpClientError, 'The array of dissertations directories has not yet been defined'
   end
 
   # See "Progress Monitoring" section of docs for Net::SFTP::Operations::Download
@@ -132,6 +142,8 @@ class SftpClient
   # Returns true if there is any yyyy_mm_dissertations directory in the local server preservation directory that has
   # the same name as a yyyy_mm_dissertations directory in the uploads/ directory of the remote SFTP server.
   # If the directory of that name is already on the local machine, perhaps it has already been downloaded.
+  # Regardless of why this occurrs, execution most likely cannot continue, as attempting to download the directory would
+  # cause a naming collision with the extent one.
   # params:
   #  - preservation_dir : absolute path of the preservations directory on the local machine
   #  - uploads : name of the directory on the remote that contains the yyyy_mm_dissertations directories
@@ -141,8 +153,9 @@ class SftpClient
     sftp_client.dir.foreach(uploads) do |entry|
       remote_dissertation_directories.push(entry.name) if entry.name.match?(Validator::DISSERTATION_DIR_REGEX)
     end
+    p remote_dissertation_directories
     remote_dissertation_directories.each do |match|
-      return true if File.directory?("#{preservation_dir}#{match}")
+      return true if File.directory?("#{preservation_dir}/#{match}")
     end
     false
   end
