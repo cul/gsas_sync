@@ -8,7 +8,8 @@ class GsasSync
 
   # @preservation_dir : the name of the local directory where files will be downloaded to
   # @uploads_dir : the name of the remote directory containing the yyyy_mm_dissertations directories
-  def initialize(temp_dir = TEMP_DIR, uploads_dir = UPLOADS_DIR)
+  # TODO : delete unsured variable
+  def initialize(_temp_dir = TEMP_DIR, uploads_dir = UPLOADS_DIR)
     GsasSync::Logger.stdout_logger.debug('Initialized GsasSync Instance')
     @preservation_dir = Config.storage['directory'] # TODO: change 'dev_directory' to 'directory' for actual preservation dir
     @uploads_dir = uploads_dir
@@ -92,7 +93,6 @@ class GsasSync
   # Verifies that the preservation directory described in the configuration file exists on the local machine
   # Returns nil. Raises a GsasSync::Exceptions::GsasError if it is not present.
   def verify_dissertations_directory_exists
-    puts GsasSync::Config.storage['directory']
     return if File.directory? @preservation_dir # TODO: change to directory
 
     raise GsasSync::Exceptions::GsasError,
@@ -121,7 +121,9 @@ class GsasSync
 
   def rm_remote_files
     @sftp_client.connect
-    @sftp_client.rm_recursive
+    @downloaded_dirs.each do |dir_name|
+      @sftp_client.rm_recursive("#{@uploads_dir}/#{dir_name}")
+    end
     @sftp_client.disconnect
   rescue StandardError => e
     raise(Exceptions::SftpClientError,
