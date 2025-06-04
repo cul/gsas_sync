@@ -173,7 +173,7 @@ class Validator
 
   def log_validated_filepath(fp, valid) # rubocop:disable Naming/MethodParameterName
     if valid
-      GsasSync::Logger.log_all "✔️ Validated for undesirable characters: #{fp.basename}"
+      GsasSync::Logger.stdout_logger.debug "✔️ Validated for undesirable characters: #{fp.basename}"
     else
       GsasSync::Logger.log_all_warn "‼️ Invalid characters found: #{fp.basename}"
     end

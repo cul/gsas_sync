@@ -62,9 +62,15 @@ end
 # The following will close the file handle: GsasSync#send_success_email, GsasSync#send_failure_email
 # Therefore, after that point, only the stdout logger is available.
 # You can reopen the file for appending with GsasSync::Logger::append (this will close the file again before returning)
-GsasSync::Logger.begin_step('Sending Email Notifications', 'This is the final step')
-GsasSync::Logger.progress('Summary of what was downloaded from the remote transfer server:')
+GsasSync::Logger.begin_step('Print Summary of the Transfer')
+GsasSync::Logger.progress('^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^')
+GsasSync::Logger.progress('^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^')
+GsasSync::Logger.progress('Printing summary of what was downloaded from the remote transfer server:')
 # TODO: do this based on the gsas_sync objects @dissertation_dirs instance variable!
 GsasSync::Logger.progress_log_dir_contents(GsasSync::Config.storage['directory'],
-                                           'Successfully downloaded the following files:')
+                                           'Successfully downloaded and validated the following files:')
+GsasSync::Logger.progress('The transfered files have been deleted on the remote transfer server')
+GsasSync::Logger.progress('vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv')
+GsasSync::Logger.progress('vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv')
+GsasSync::Logger.begin_step('Sending Email Notifications', 'This is the final step')
 gsas_sync.email_and_exit_success

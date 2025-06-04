@@ -110,34 +110,26 @@ class SftpClient
 
   # rm_recursive uses an open @sftp_client
   # Recursively delete all the contents of the given directory, and then the directory itself
-  # TODO : you cannot just do entry.name in the block passed to glob...each
-  # you need THE FULL PATH TO THE FILE on the remote, so we need to make that string
+  # TODO : we may be able to delete all empty directories at once with rmdir!("#{directory}/*")
   def rm_recursive(directory)
     GsasSync::Logger.log_all("Removing the #{directory} directory on the remote server...")
     # First delete all files
-    puts 'first we do files'
     sftp_client.dir.glob(directory, '**/*') do |entry|
       if entry.file?
-        puts "rm-ing file #{directory}/#{entry.name}!"
         @sftp_client.remove!("#{directory}/#{entry.name}") # TODO: uncomment when ready
-        # @sftp_client.remove(entry.name).wait # TODO: uncomment when ready
       end
     end
     # Second delete all directories (For why, see documentation for #rmdir and #rmdir! : https://net-ssh.github.io/net-sftp/)
-    puts 'now directories'
     sftp_client.dir.glob(directory, '**/*').sort_by { |path| -1 * path.name.split('/').length }.each do |entry|
       next if ['.', '..'].include?(entry.name)
 
       next unless entry.directory?
 
-      puts "rm-ing directory #{directory}/#{entry.name}!"
-      # TODO : an exception happens here because directories need to be empty! So, we need to delete the innermost-nested directories first!
-      #        And how do we do that? First thought is a recursive algorithm... Not sure...
       @sftp_client.rmdir!("#{directory}/#{entry.name}") # TODO: uncomment when ready
-      # @sftp_client.rmdir(entry.name).wait # TODO: uncomment when ready
     end
     @sftp_client.rmdir!(directory)
   rescue StandardError => e
+    # TODO: handle error
     puts 'rescued error from rm_recursive. exiting...'
     puts e
     exit(1)

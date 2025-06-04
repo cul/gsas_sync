@@ -151,7 +151,7 @@ class GsasSync
   end
 
   def send_success_email
-    GsasSync::Logger.progress('at the top of GsasSync#send_success_email()') # TODO: summary?
+    GsasSync::Logger.stdout_logger.debug('GsasSync#send_success_email(): Entry')
     GsasSync::Logger.close_progress_log_file
     mail_client.send_success_email_all
   rescue StandardError => e

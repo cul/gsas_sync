@@ -62,7 +62,7 @@ class GsasSync::Logger
 
       progress(message.empty? ? "Contents of '#{directory}' directory:" : message)
       Dir.glob('**/*', base: directory).each do |child|
-        progress_log << "\t\t - #{child}\n"
+        progress_log << "\t\t\t\t - #{child}\n"
       end
     end
 
