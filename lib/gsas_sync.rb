@@ -222,7 +222,6 @@ class GsasSync
     GsasSync::Logger.progress('The transfered files have been deleted on the remote transfer server')
     GsasSync::Logger.progress('vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv')
     GsasSync::Logger.progress('vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv')
-    exit(111)
   end
 
   private
