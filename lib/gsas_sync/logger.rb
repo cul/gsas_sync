@@ -28,23 +28,23 @@ class GsasSync::Logger
 
     def log_all(message)
       stdout_logger.info(message)
-      progress_log << "#{time_prefix}\t #{message}\n" unless @progress_log.closed?
+      progress_log << "#{time_prefix}\t #{message}\n" # unless @progress_log.closed?
     end
 
     def log_all_fatal(message)
       stdout_logger.fatal(message)
-      progress_log << pl_fatal(message) unless @progress_log.closed?
+      progress_log << pl_fatal(message) # unless @progress_log.closed?
     end
 
     def log_all_error(message, err)
       stdout_logger.warn(message)
       stdout_logger.warn(err)
-      progress_log << pl_error(message, err) unless @progress_log.closed?
+      progress_log << pl_error(message, err) # unless @progress_log.closed?
     end
 
     def log_all_warn(message)
       stdout_logger.warn(message)
-      progress_log << pl_warn(message) unless @progress_log.closed?
+      progress_log << pl_warn(message) # unless @progress_log.closed?
     end
 
     def begin_step(title, description = '')
@@ -54,11 +54,11 @@ class GsasSync::Logger
     end
 
     def progress(message)
-      progress_log << "#{time_prefix}\t#{message}\n" unless @progress_log.closed?
+      progress_log << "#{time_prefix}\t#{message}\n" # unless @progress_log.closed?
     end
 
     def progress_log_dir_contents(directory, message = '')
-      return if @progress_log.closed?
+      # return if @progress_log.closed?
 
       progress(message.empty? ? "Contents of '#{directory}' directory:" : message)
       Dir.glob('**/*', base: directory).each do |child|

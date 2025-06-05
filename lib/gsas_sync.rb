@@ -51,7 +51,7 @@ class GsasSync
   end
 
   def rm_temp_dirs
-    GsasSync::Logger.stdout_logger.debug('GsasSync#rm_remp_dirs(): Entry')
+    GsasSync::Logger.stdout_logger.debug('GsasSync#rm_temp_dirs(): Entry')
     @downloaded_dirs.each do |dir|
       FileUtils.rm_rf("#{@preservation_dir}/#{dir}.temp") if File.directory?("#{@preservation_dir}/#{dir}.temp")
     end
@@ -152,6 +152,7 @@ class GsasSync
 
   def send_success_email
     GsasSync::Logger.stdout_logger.debug('GsasSync#send_success_email(): Entry')
+    GsasSync::Logger.log_all('Closing progress log file in order to send email...')
     GsasSync::Logger.close_progress_log_file
     mail_client.send_success_email_all
   rescue StandardError => e
@@ -183,9 +184,9 @@ class GsasSync
   # Gracefully terminates the program, closing any open OS resources
   # Closes the sftp connection and progress log file, if open.
   def graceful_exit
-    GsasSync::Logger.log_all('Gracefully shutting down...')
+    GsasSync::Logger.stdout_logger.info('Gracefully shutting down...')
     @sftp_client.disconnect unless @sftp_client.nil? || @sftp_client.closed?
-    GsasSync::Logger.close_progress_log_file
+    # GsasSync::Logger.close_progress_log_file
     exit
   end
 
