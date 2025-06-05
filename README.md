@@ -14,7 +14,7 @@ bundle install    # Install dependencies
 rbenv install     # Install correct ruby version
 
 # Create an SSH Tunnel
-sshuttle -r bg2918@connect.cul.columbia.edu 0.0.0.0/0
+sshuttle -r YOUR_UNI@connect.cul.columbia.edu 0.0.0.0/0
 
 ruby main.rb      # Run the script
 ```
