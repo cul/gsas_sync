@@ -28,6 +28,10 @@ class GsasSync
 
   def rename_temp_dirs
     Logger.stdout_logger.debug 'GsasSync#rename_temp_dirs: Entry'
+    if GsasSync::Config.dry_run
+      GsasSync::Logger.log_all 'DRY RUN: Skipping renaming of temp directories; temp directories will be removed.'
+      return
+    end
     @downloaded_dirs.each do |dir_name|
       FileUtils.mv "#{@preservation_dir}/#{dir_name}.temp", "#{@preservation_dir}/#{dir_name}"
     end
@@ -120,6 +124,10 @@ class GsasSync
   end
 
   def rm_remote_files
+    if GsasSync::Config.dry_run
+      GsasSync::Logger.log_all 'DRY RUN: Skipping deletion of downloaded files from remote transfer server.'
+      return
+    end
     @sftp_client.connect
     @downloaded_dirs.each do |dir_name|
       @sftp_client.rm_recursive("#{@uploads_dir}/#{dir_name}")
@@ -141,6 +149,21 @@ class GsasSync
     validators
   end
 
+  def email_and_exit_failure
+    if GsasSync::Config.dry_run
+      GsasSync::Logger.log_all('DRY RUN: Skipping success email notification.')
+    else
+      GsasSync::Logger.log_all_fatal('Sending failure email notification. This will close the local progress.log file...')
+      # TODO : remove dissertations/ ... .temp directory/ies if exists !!!! (YOU are here Tuesady afternoon)
+      send_failure_email
+    end
+  rescue StandardError => e
+    GsasSync::Logger.stdout_logger.fatal("#{e.class} - #{e.message}")
+    GsasSync::Logger.progress_log_append("#{e.class} - #{e.message}")
+  ensure
+    graceful_exit
+  end
+
   def send_failure_email
     GsasSync::Logger.close_progress_log_file
     rm_temp_dirs
@@ -148,6 +171,21 @@ class GsasSync
   rescue StandardError => e
     raise(GsasSync::Exceptions::EmailError,
           "An error occurred while sending an email via SMTP. This is problematic as the email was an error notification, and it was unable to send. Please examine logs locally. Error: #{e}")
+  end
+
+  def email_and_exit_success
+    if GsasSync::Config.dry_run
+      GsasSync::Logger.log_all('DRY RUN: Skipping success email notification.')
+      rm_temp_dirs
+    else
+      send_success_email
+      GsasSync::Logger.stdout_logger.info('The Gsas Sync Process has completed successfully.')
+    end
+  rescue StandardError => e
+    GsasSync::Logger.stdout_logger.fatal("#{e.class} - #{e.message}")
+    GsasSync::Logger.progress_log_append("#{e.class} - #{e.message}")
+  ensure
+    graceful_exit
   end
 
   def send_success_email
@@ -160,27 +198,6 @@ class GsasSync
           "An error occurred while sending an email via SMTP. This email was a notification that the process succeeded. This failure will be logged and the program will now attempt to send a failure email notification. Error: #{e}")
   end
 
-  def email_and_exit_failure
-    GsasSync::Logger.log_all_fatal('Sending failure email notification. This will close the local progress.log file...')
-    # TODO : remove dissertations/ ... .temp directory/ies if exists !!!! (YOU are here Tuesady afternoon)
-    send_failure_email
-  rescue StandardError => e
-    GsasSync::Logger.stdout_logger.fatal("#{e.class} - #{e.message}")
-    GsasSync::Logger.progress_log_append("#{e.class} - #{e.message}")
-  ensure
-    graceful_exit
-  end
-
-  def email_and_exit_success
-    send_success_email
-    GsasSync::Logger.stdout_logger.info('The Gsas Sync Process has completed successfully.')
-  rescue StandardError => e
-    GsasSync::Logger.stdout_logger.fatal("#{e.class} - #{e.message}")
-    GsasSync::Logger.progress_log_append("#{e.class} - #{e.message}")
-  ensure
-    graceful_exit
-  end
-
   # Gracefully terminates the program, closing any open OS resources
   # Closes the sftp connection and progress log file, if open.
   def graceful_exit
@@ -188,6 +205,24 @@ class GsasSync
     @sftp_client.disconnect unless @sftp_client.nil? || @sftp_client.closed?
     # GsasSync::Logger.close_progress_log_file
     exit
+  end
+
+  def log_summary
+    GsasSync::Logger.progress('^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^')
+    GsasSync::Logger.progress('^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^')
+    GsasSync::Logger.progress('Printing summary of what was downloaded from the remote transfer server:')
+    if GsasSync::Config.dry_run
+      GsasSync::Logger.progress('(This is a dry run and only temporary downloads were made. This is a summary of what was downloaded, validated, and then deleted.)')
+    end
+    # TODO: do this based on the gsas_sync objects @dissertation_dirs instance variable!
+    temp = GsasSync::Config.dry_run ? '.temp' : ''
+    @downloaded_dirs.each do |dir|
+      GsasSync::Logger.progress_log_dir_contents("#{GsasSync::Config.storage['directory']}/#{dir}#{temp}")
+    end
+    GsasSync::Logger.progress('The transfered files have been deleted on the remote transfer server')
+    GsasSync::Logger.progress('vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv')
+    GsasSync::Logger.progress('vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv')
+    exit(111)
   end
 
   private

@@ -28,23 +28,23 @@ class GsasSync::Logger
 
     def log_all(message)
       stdout_logger.info(message)
-      progress_log << "#{time_prefix}\t #{message}\n" # unless @progress_log.closed?
+      progress_log << "#{time_prefix}\t #{message}\n"
     end
 
     def log_all_fatal(message)
       stdout_logger.fatal(message)
-      progress_log << pl_fatal(message) # unless @progress_log.closed?
+      progress_log << pl_fatal(message)
     end
 
     def log_all_error(message, err)
       stdout_logger.warn(message)
       stdout_logger.warn(err)
-      progress_log << pl_error(message, err) # unless @progress_log.closed?
+      progress_log << pl_error(message, err)
     end
 
     def log_all_warn(message)
       stdout_logger.warn(message)
-      progress_log << pl_warn(message) # unless @progress_log.closed?
+      progress_log << pl_warn(message)
     end
 
     def begin_step(title, description = '')
@@ -54,15 +54,13 @@ class GsasSync::Logger
     end
 
     def progress(message)
-      progress_log << "#{time_prefix}\t#{message}\n" # unless @progress_log.closed?
+      progress_log << "#{time_prefix}\t#{message}\n"
     end
 
     def progress_log_dir_contents(directory, message = '')
-      # return if @progress_log.closed?
-
       progress(message.empty? ? "Contents of '#{directory}' directory:" : message)
       Dir.glob('**/*', base: directory).each do |child|
-        progress_log << "\t\t\t\t - #{child}\n"
+        progress_log << "\t\t\t\t - #{directory.split('/').last}/#{child}\n"
       end
     end
 
@@ -128,11 +126,10 @@ class GsasSync::Logger
       time_stamp_a = Time.strptime(LOG_FILE_REGEX.match(time_a.basename.to_s)[1], TIME_FORMAT_STR)
       time_stamp_b = Time.strptime(LOG_FILE_REGEX.match(time_b.basename.to_s)[1], TIME_FORMAT_STR)
       case time_stamp_a <=> time_stamp_b
-      when -1 then res = true
-      when 1 then res = false
+      when -1 then true
+      when 1 then false
       when 0 then raise 'Unknown error occurred: somehow, two log files have the same exact timestamp...'
       end
-      res
     end
 
     def init_stdout_logger
@@ -185,7 +182,7 @@ class GsasSync::Logger
     end
 
     def pl_begin_step(step, title, desc = '')
-      "=======================#{time_prefix}=======================\n" \
+      "==============================================#{time_prefix}==============================================\n" \
       "#{time_prefix} Step: #{step}.) #{title}#{' -- ' unless desc.empty?}#{desc}\n"
     end
   end

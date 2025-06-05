@@ -156,7 +156,6 @@ class SftpClient
     sftp_client.dir.foreach(uploads) do |entry|
       remote_dissertation_directories.push(entry.name) if entry.name.match?(Validator::DISSERTATION_DIR_REGEX)
     end
-    p remote_dissertation_directories
     remote_dissertation_directories.each do |match|
       return true if File.directory?("#{preservation_dir}/#{match}")
     end

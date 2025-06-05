@@ -213,7 +213,6 @@ class Validator
     end
     if @digest_class.nil?
       GsasSync::Logger.log_all_warn('No valid checksum algorithm. Unable to validate that all files in manifest are present.')
-      puts 'no digest class!'
       return false
     end
     true

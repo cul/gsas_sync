@@ -9,6 +9,8 @@ class GsasSync
     CONFIG_LOCATION = 'config/config.yml'
 
     class << self
+      attr_accessor :dry_run
+
       def sftp_server
         config['sftp_server']
       end

@@ -19,10 +19,16 @@ require 'optparse'
 ################################################################################
 
 args = GsasSync::ArgParser.parse_cl_args
-args => { log_lvl: log_lvl}
+args => { log_lvl: log_lvl, dry_run: dry_run }
 
 # TODO: There should be a better way to do this
 GsasSync::Logger.stdout_log_level = log_lvl
+if GsasSync::Config.dry_run
+  GsasSync::Logger.log_all('Gsas Sync is running in dry run mode.')
+  GsasSync::Logger.log_all('Files will be downloaded temporarily, validated, then deleted.'\
+    ' No files will be permanently moved or deleted from either the local host or remote transfer server.'\
+    ' No email notification will be sent.')
+end
 
 gsas_sync = GsasSync.new
 
@@ -57,20 +63,14 @@ rescue StandardError => e
   )
   gsas_sync.email_and_exit_failure
 end
-# Not for developers:
+
+GsasSync::Logger.begin_step('Print Summary of the Transfer')
+gsas_sync.log_summary
+
+# Note for developers:
 # When sending the success email, the progress log file handle will be closed in order to add it as an attachment.
 # The following will close the file handle: GsasSync#send_success_email, GsasSync#send_failure_email
 # Therefore, after that point, only the stdout logger is available.
 # You can reopen the file for appending with GsasSync::Logger::append (this will close the file again before returning)
-GsasSync::Logger.begin_step('Print Summary of the Transfer')
-GsasSync::Logger.progress('^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^')
-GsasSync::Logger.progress('^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^')
-GsasSync::Logger.progress('Printing summary of what was downloaded from the remote transfer server:')
-# TODO: do this based on the gsas_sync objects @dissertation_dirs instance variable!
-GsasSync::Logger.progress_log_dir_contents(GsasSync::Config.storage['directory'],
-                                           'Successfully downloaded and validated the following files:')
-GsasSync::Logger.progress('The transfered files have been deleted on the remote transfer server')
-GsasSync::Logger.progress('vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv')
-GsasSync::Logger.progress('vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv')
 GsasSync::Logger.begin_step('Sending Email Notifications', 'This is the final step')
 gsas_sync.email_and_exit_success
