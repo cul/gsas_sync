@@ -18,6 +18,20 @@ sshuttle -r YOUR_UNI@connect.cul.columbia.edu 0.0.0.0/0
 
 ruby main.rb      # Run the script
 ```
+#### Command Line Interface
+The gsas sync script supports two command line arguments for setting the standard out logging level and running the script in dry-run mode. Use the `-h` flag to see the usage script:
+```
+% ruby gsas_sync_main.rb --help
+Usage:
+	ruby gsas_sync_main.rb [options]
+    -l, --log-level [LLVL]           Specify the runtime log level (debug, info, warn, error, fatal - default is 'debug')
+        --dry-run [DRYRUN]           Run as dry-run
+```
+##### Dry-Run Mode
+The gsas sync script supports a dry-run option to download and validate transfer directories without making any permanent changes to either the rmeote server or the local host.
+```
+ruby gsas_sync_main.rb --dry-run
+```
 ### Ready your local dev environment
 #### Using ssh tunnelling to the test transfer server:
 While developing locally, we connect to the test transfer server as the special transfer user. You should obtain a copy of that user's private SSH key and put it in your dev machine's `~/.ssh` directory. Additionally, create a local `config/config.yml` and populate it with the proper credentials. Refer to spec/fixtures/config.yml for reference.
