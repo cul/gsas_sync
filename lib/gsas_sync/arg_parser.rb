@@ -15,7 +15,9 @@ module GsasSync::ArgParser
       opts.banner = USAGE_STR
       # TODO : debug why log level cant be specified from command line...
       opts.on('-l [LLVL]', '--log-level [LLVL]',
-              "Specify the runtime log level (debug, info, warn, error, fatal - default is '#{log_lvl_to_str(DEFAULT_STDOUT_LOG_LEVEL)}')")
+              "Specify the runtime log level (debug, info, warn, error, fatal - default is '#{log_lvl_to_str(DEFAULT_STDOUT_LOG_LEVEL)}')") do |v|
+        options[:log_lvl] = str_to_log_lvl v
+      end
 
       opts.on('--dry-run [DRYRUN]', 'Run as dry-run') do
         # Set to true if the --dry-run option included
@@ -24,10 +26,9 @@ module GsasSync::ArgParser
       end
       options[:help] = opts.help
     }.parse!(into: options)
-
     log_lvl = options.key?(:log_lvl) ? options[:log_lvl] : DEFAULT_STDOUT_LOG_LEVEL
-    dry_run = options.key?(:dry_run) ? true : false # TOD OHERE
-
+    dry_run = options.key?(:dry_run) ? true : false
+    GsasSync::Logger.stdout_log_level = log_lvl
     { log_lvl: log_lvl, dry_run: dry_run }
   end
 

@@ -17,12 +17,9 @@ require 'optparse'
 ################################################################################
 ################################ SCRIPT ########################################
 ################################################################################
-
 args = GsasSync::ArgParser.parse_cl_args
-args => { log_lvl: log_lvl, dry_run: dry_run }
+args => { log_lvl: log_lvl, dry_run: _dry_run }
 
-# TODO: There should be a better way to do this
-GsasSync::Logger.stdout_log_level = log_lvl
 if GsasSync::Config.dry_run
   GsasSync::Logger.log_all('Gsas Sync is running in dry run mode.')
   GsasSync::Logger.log_all('Files will be downloaded temporarily, validated, then deleted.'\
@@ -31,16 +28,17 @@ if GsasSync::Config.dry_run
 end
 
 gsas_sync = GsasSync.new
+server_name = GsasSync::Config.sftp_server_str
 
 GsasSync::Logger.begin_step('Download files from remote',
-                            "Downloading files from the remote transfer (sftp) server #{GsasSync::Config.sftp_server_str}")
+                            "Downloading files from the remote transfer (sftp) server #{server_name}")
 gsas_sync.download_files_to_temp_dir
 
 GsasSync::Logger.begin_step('Validating downloaded files')
 valid = gsas_sync.validate_downloaded_files
 
 unless valid
-  GsasSync::Logger.log_all_fatal('One or more of the validation tests failed. The script will send a notificaiton email and exit.')
+  GsasSync::Logger.log_all_fatal('One or more validation tests failed. The process will send a failure email and exit.')
   gsas_sync.email_and_exit_failure
 end
 

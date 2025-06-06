@@ -1,0 +1,2 @@
+[2025 06  6 - 14:16:05::807]	GsasSync::Exceptions::EmailError - An error occurred while sending an email via SMTP. This email was a notification that the process succeeded. This failure will be logged and the program will now attempt to send a failure email notification. Error: execution expired
+[2025 06  6 - 14:17:37::419]	GsasSync::Exceptions::EmailError - An error occurred while sending an email via SMTP. This is problematic as the email was an error notification, and it was unable to send. Please examine logs locally. Error: execution expired

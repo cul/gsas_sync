@@ -13,17 +13,7 @@ class GsasSync
     GsasSync::Logger.stdout_logger.debug('Initialized GsasSync Instance')
     @preservation_dir = Config.storage['directory'] # TODO: change 'dev_directory' to 'directory' for actual preservation dir
     @uploads_dir = uploads_dir
-    @downloaded_dirs = [] # Array of strings for each yyyy_mm_dissertations directory that was downloaded. Will be defined after downloading.
-  end
-
-  # TODO : this actually isn't the best strategy; the 'dissertations' directory will contain multiple 'yyyy_mm_dissertations'
-  #        directories within it. We should instead download to this dissertations directory but save in a folder called
-  #        'yyyy_mm_dissertations.temp'. Then the rename_temp_dir function will rename that to 'yyyy_mm_dissertations.temp'
-  # Renames the temporary 'dissertations.temp' directory to just 'dissertations'
-  # TODO : herem (Monday)
-  def rename_temp_dir(src = @temp_dir, dst = @preservation_dir) # TODO : DELETE
-    Logger.stdout_logger.debug 'GsasSync#rename_temp_dir: Entry'
-    FileUtils.mv src, dst
+    @downloaded_dirs = [] # Array of strings for each yyyy_mm_dissertations directory that was downloaded
   end
 
   def rename_temp_dirs
@@ -35,23 +25,6 @@ class GsasSync
     @downloaded_dirs.each do |dir_name|
       FileUtils.mv "#{@preservation_dir}/#{dir_name}.temp", "#{@preservation_dir}/#{dir_name}"
     end
-  end
-
-  # Move the downloaded files from the temporary directory to the configurable'storage' destination (where on the
-  # production server to store the files for eventually preservation).
-  # This is done by moving each dissertation directory (yyyy_mm_dd_disserations/) to the final storage directory.
-  def move_temp_files # TODO : DELETE
-    GsasSync::Logger.stdout_logger.debug 'GsasSync#move_temp_files: Entry'
-    source = "#{FileUtils.pwd}/#{TEMP_DIR}"
-    destination = GsasSync::Config.storage['directory'] # This will be an absolute path
-    GsasSync::Logger.log_all "Moving files from #{source} to #{destination}"
-    Pathname.new(source).each_child do |child_directory|
-      FileUtils.mkdir(destination) unless File.directory?(destination)
-      FileUtils.mv("#{source}/#{child_directory.basename}", "#{destination}/#{child_directory.basename}", secure: true)
-    end
-  rescue StandardError => e
-    raise(Exceptions::GsasError,
-          "An error occurred trying to move the downloaded files to the final storage directory on the local server: Error: #{e}")
   end
 
   def rm_temp_dirs
@@ -100,7 +73,7 @@ class GsasSync
     return if File.directory? @preservation_dir # TODO: change to directory
 
     raise GsasSync::Exceptions::GsasError,
-          'The directory described in the config file where downloaded files should be stored does not exist on the local machine.'
+          'The directory described in the config file where downloaded files should be stored does not exist on the local machine.' # rubocop:disable Layout/LineLength
   end
 
   # Create Validator objects for each yyyy_mm_dissertations directory and runs all validations, returning the result
@@ -116,10 +89,10 @@ class GsasSync
 
       valid = false
     end
-    GsasSync::Logger.log_all("Finished running validations for all downloaded files: #{valid ? 'SUCCESS ✅' : 'FAILURE ❌'}")
+    GsasSync::Logger.log_all("Finished running validations for all downloaded files: #{valid ? 'SUCCESS ✅' : 'FAILURE ❌'}") # rubocop:disable Layout/LineLength
     valid
   rescue StandardError => e
-    GsasSync::Logger.log_all_fatal("An unexpected fatal error occurred while validating the downloaded files: #{e}. Unable to proceed. Exiting...")
+    GsasSync::Logger.log_all_fatal("An unexpected fatal error occurred while validating the downloaded files: #{e}. Unable to proceed. Exiting...") # rubocop:disable Layout/LineLength
     email_and_exit_failure
   end
 
@@ -153,8 +126,7 @@ class GsasSync
     if GsasSync::Config.dry_run
       GsasSync::Logger.log_all('DRY RUN: Skipping success email notification.')
     else
-      GsasSync::Logger.log_all_fatal('Sending failure email notification. This will close the local progress.log file...')
-      # TODO : remove dissertations/ ... .temp directory/ies if exists !!!! (YOU are here Tuesady afternoon)
+      GsasSync::Logger.log_all_fatal('Sending failure email notification. This will close the progress.log file...')
       send_failure_email
     end
   rescue StandardError => e
@@ -170,7 +142,7 @@ class GsasSync
     mail_client.send_failure_email_all
   rescue StandardError => e
     raise(GsasSync::Exceptions::EmailError,
-          "An error occurred while sending an email via SMTP. This is problematic as the email was an error notification, and it was unable to send. Please examine logs locally. Error: #{e}")
+          "An error occurred while sending an email via SMTP. This is problematic as the email was an error notification, and it was unable to send. Please examine logs locally. Error: #{e}") # rubocop:disable Layout/LineLength
   end
 
   def email_and_exit_success
@@ -195,15 +167,14 @@ class GsasSync
     mail_client.send_success_email_all
   rescue StandardError => e
     raise(GsasSync::Exceptions::EmailError,
-          "An error occurred while sending an email via SMTP. This email was a notification that the process succeeded. This failure will be logged and the program will now attempt to send a failure email notification. Error: #{e}")
+          "An error occurred while sending an email via SMTP. This email was a notification that the process succeeded. This failure will be logged and the program will now attempt to send a failure email notification. Error: #{e}") # rubocop:disable Layout/LineLength
   end
 
   # Gracefully terminates the program, closing any open OS resources
-  # Closes the sftp connection and progress log file, if open.
   def graceful_exit
     GsasSync::Logger.stdout_logger.info('Gracefully shutting down...')
     @sftp_client.disconnect unless @sftp_client.nil? || @sftp_client.closed?
-    # GsasSync::Logger.close_progress_log_file
+    GsasSync::Logger.close_progress_log_file
     exit
   end
 
@@ -212,9 +183,8 @@ class GsasSync
     GsasSync::Logger.progress('^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^')
     GsasSync::Logger.progress('Printing summary of what was downloaded from the remote transfer server:')
     if GsasSync::Config.dry_run
-      GsasSync::Logger.progress('(This is a dry run and only temporary downloads were made. This is a summary of what was downloaded, validated, and then deleted.)')
+      GsasSync::Logger.progress('(This is a dry run and only temporary downloads were made. This is a summary of what was downloaded, validated, and then deleted.)') # rubocop:disable Layout/LineLength
     end
-    # TODO: do this based on the gsas_sync objects @dissertation_dirs instance variable!
     temp = GsasSync::Config.dry_run ? '.temp' : ''
     @downloaded_dirs.each do |dir|
       GsasSync::Logger.progress_log_dir_contents("#{GsasSync::Config.storage['directory']}/#{dir}#{temp}")

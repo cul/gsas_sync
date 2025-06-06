@@ -3,3 +3,13 @@ config:
     host: "test_sftp_server"
     user: "test_user"
     key: "path/to/key"
+  mail_server:
+    host: "test_smtp_server"
+    port: 25
+    sender_address: "test_sender_email"
+    recipients:
+     - "test_recipient_email"
+  logs:
+    directory: 'logs'
+  storage:
+    directory: 'path/to/storage'

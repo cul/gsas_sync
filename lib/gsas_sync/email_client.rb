@@ -45,6 +45,7 @@ class GsasSync
         body body
         add_file attachment
       end
+      GsasSync::Logger.stdout_logger.debug('Success email sent')
     end
 
     def send_success_email_all
@@ -70,8 +71,7 @@ class GsasSync
         body body # body
         add_file attachment
       end
-
-      # TODO: log success
+      GsasSync::Logger.stdout_logger.debug('Failure email sent')
     end
   end
 end

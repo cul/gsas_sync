@@ -26,7 +26,7 @@ RSpec.describe SftpClient do
       expect(client.connect).to be(nil)
     end
 
-    it 'Raises an SftpClientError when unable to connect to remote host', focus: true do
+    it 'Raises an SftpClientError when unable to connect to remote host' do
       expect {
         client.connect
       }.to raise_error(GsasSync::Exceptions::SftpClientError)

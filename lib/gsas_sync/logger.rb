@@ -135,7 +135,7 @@ class GsasSync::Logger
     def init_stdout_logger
       raise GsasSync::Exceptions::GsasError, 'Standard out log level must be set' if @stdout_log_level.nil?
 
-      @stdout_logger = Logger.new($stdout, stdout_log_level)
+      @stdout_logger = Logger.new($stdout, level: @stdout_log_level)
       format_logger
       @stdout_logger
     end
