@@ -13,7 +13,7 @@ class SftpClient
   def connect
     GsasSync::Logger.stdout_logger.debug("Connecting to #{@user}@#{@host}...")
     begin
-      sftp_client.connect!
+      sftp_session.connect!
     rescue StandardError => e
       raise GsasSync::Exceptions::SftpClientError, "Error while connecting to #{@user}@#{@host}. #{error_string(e)}"
     end
@@ -25,7 +25,7 @@ class SftpClient
   def disconnect
     GsasSync::Logger.stdout_logger.debug 'Closing SFTP connection...'
     begin
-      @sftp_client.close_channel unless @sftp_client.closed?
+      @sftp_session.close_channel unless @sftp_session.closed?
       @ssh_session.close unless @ssh_session.closed?
     rescue StandardError => e
       raise GsasSync::Exceptions::SftpClientError, "Error trying to close sftp/ssh connection. #{error_string(e)}"
@@ -34,19 +34,19 @@ class SftpClient
   end
 
   def closed?
-    return true if @sftp_client.nil?
+    return true if @sftp_session.nil?
 
-    @sftp_client.closed?
+    @sftp_session.closed?
   end
 
-  def sftp_client
-    @sftp_client ||= Net::SFTP::Session.new(ssh_session)
+  def sftp_session
+    @sftp_session ||= Net::SFTP::Session.new(ssh_session)
   rescue StandardError => e
     raise GsasSync::Exceptions::SftpClientError, "Error trying to start an SFTP session. #{error_string(e)}"
   end
 
   def ssh_session
-    @ssh_session = Net::SSH.start(@host, @user, keys: [@key])
+    @ssh_session ||= Net::SSH.start(@host, @user, keys: [@key])
   rescue StandardError => e
     raise GsasSync::Exceptions::SftpClientError, "Error trying to start an SSH session. #{error_string(e)}"
   end
@@ -58,7 +58,7 @@ class SftpClient
     GsasSync::Logger.stdout_logger.debug('dl_dissertation_dirs_to_temp(): Entry')
     @dissertation_dirs = []
     # Determine how many yyyy_mm_dissertations directories are present on the remote
-    sftp_client.dir.foreach(remote_uploads_dir) do |entry|
+    sftp_session.dir.foreach(remote_uploads_dir) do |entry|
       @dissertation_dirs.push(entry.name) if entry.name.match?(Validator::DISSERTATION_DIR_REGEX)
     end
     # Download each of those remote yyyy_mm_dissertations directories to local as .temp directories
@@ -81,7 +81,7 @@ class SftpClient
   def dl_recursive(remote_src, local_dst) # rubocop:disable Metrics/AbcSize,Metrics/MethodLength
     GsasSync::Logger.log_all "Beginning SFTP download: [remote]/#{remote_src} -> [local]/#{local_dst}"
     begin
-      sftp_client.download!(remote_src, local_dst, recursive: true) do |event, _downloader, *args|
+      sftp_session.download!(remote_src, local_dst, recursive: true) do |event, _downloader, *args|
         case event
         when :open
           # args[0] : file metadata
@@ -108,35 +108,30 @@ class SftpClient
     GsasSync::Logger.log_all("Downloaded files from #{@user}@#{@host}:#{remote_src}/ -> #{local_dst}/")
   end
 
-  # rm_recursive uses an open @sftp_client
+  # rm_recursive uses an open @sftp_session
   # Recursively delete all the contents of the given directory, and then the directory itself
   # TODO : we may be able to delete all empty directories at once with rmdir!("#{directory}/*")
   def rm_recursive(directory)
     GsasSync::Logger.log_all("Removing the #{directory} directory on the remote server...")
-    # First delete all files
-    sftp_client.dir.glob(directory, '**/*') do |entry|
-      if entry.file?
-        @sftp_client.remove!("#{directory}/#{entry.name}") # TODO: uncomment when ready
-      end
-    end
-    # Second delete all directories (For why, see documentation for #rmdir and #rmdir! : https://net-ssh.github.io/net-sftp/)
-    sftp_client.dir.glob(directory, '**/*').sort_by { |path| -1 * path.name.split('/').length }.each do |entry|
-      next if ['.', '..'].include?(entry.name)
+    # First, delete all files
+    sftp_session.dir.glob(directory, '**/*').each do |entry|
+      next unless entry.file?
 
-      next unless entry.directory?
-
-      @sftp_client.rmdir!("#{directory}/#{entry.name}") # TODO: uncomment when ready
+      sftp_session.remove!("#{directory}/#{entry.name}") # TODO: uncomment when ready
     end
-    @sftp_client.rmdir!(directory)
+    # Second, delete all directories (For why, see documentation for #rmdir and #rmdir! : https://net-ssh.github.io/net-sftp/)
+    sftp_session.dir.glob(directory, '**/*').sort_by { |path| -1 * path.name.split('/').length }.each do |entry|
+      next if ['.', '..'].include?(entry.name) || entry.file?
+
+      sftp_session.rmdir!("#{directory}/#{entry.name}") # TODO: uncomment when ready
+    end
+    sftp_session.rmdir!(directory)
   rescue StandardError => e
-    # TODO: handle error
-    puts 'rescued error from rm_recursive. exiting...'
-    puts e
-    exit(1)
+    raise e
   end
 
   def uploads_dir?
-    sftp_client.dir.foreach('.') do |entry|
+    sftp_session.dir.foreach('.') do |entry|
       return true if entry.name == 'uploads' && entry.directory?
     end
     false
@@ -153,7 +148,9 @@ class SftpClient
   def dissertations_dir_already_exists?(preservation_dir, uploads = 'uploads')
     GsasSync::Logger.stdout_logger.debug('GsasSync::SftpClient#dissertations_dir_already_exists(): Entry')
     remote_dissertation_directories = []
-    sftp_client.dir.foreach(uploads) do |entry|
+    puts 'hey'
+    sftp_session.dir.foreach(uploads) do |entry|
+      puts entry.name
       remote_dissertation_directories.push(entry.name) if entry.name.match?(Validator::DISSERTATION_DIR_REGEX)
     end
     remote_dissertation_directories.each do |match|
@@ -165,7 +162,7 @@ class SftpClient
   # directory : string name of the directory (not an absolute path)
   def ls(directory = '.')
     GsasSync::Logger.stdout_logger.info "`ls -la #{directory}` on remote server :"
-    sftp_client.dir.foreach(directory) do |entry|
+    sftp_session.dir.foreach(directory) do |entry|
       GsasSync::Logger.stdout_logger.info "\t#{entry.longname}"
     end
   rescue StandardError => e
