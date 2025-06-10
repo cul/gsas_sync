@@ -5,6 +5,7 @@ require 'net/sftp'
 
 RSpec.describe SftpClient do
   # GLOBAL TESTING OBJECTS (ALL OTHERS SCOPED TO EXAMPLE GROUPS OR EXAMPLES)
+  test_directory = 'test_directory'
   let(:logger_double) { instance_double(Logger) }
   let(:sftp_session_double) { instance_double(Net::SFTP::Session) }
   let(:ssh_session_double) { instance_double(Net::SSH::Connection::Session) }
@@ -26,21 +27,28 @@ RSpec.describe SftpClient do
     instance_double(Net::SFTP::Protocol::V01::Name, name: 'dissertation.pdf', file?: true, directory?: false)
   end
   let(:dir_double) { instance_double(Net::SFTP::Operations::Dir) }
+  let(:test_sftp_client) { described_class.new }
 
-  test_sftp_client = described_class.new
-  test_directory = 'test_directory'
-
-  # TESTS
   before do
-    allow(GsasSync::Config).to receive(:sftp_server).and_return({ host: 'test_sftp_server', user: 'test_user',
-                                                                  key: 'path/to/key' })
-
-    allow(test_sftp_client).to receive(:sftp_session).and_return(sftp_session_double)
-    allow(sftp_session_double).to receive(:dir).and_return(dir_double)
-
+    # Mock logging
     allow(GsasSync::Logger).to receive(:stdout_logger).and_return(logger_double)
     allow(logger_double).to receive(:debug)
     allow(logger_double).to receive(:info)
+    # Mock config
+    allow(GsasSync::Config).to receive(:sftp_server).and_return({ host: 'test_sftp_server', user: 'test_user',
+                                                                  key: 'path/to/key' })
+
+    # Class-specific mock objects
+    allow(test_sftp_client).to receive(:sftp_session).and_return(sftp_session_double)
+    allow(sftp_session_double).to receive(:dir).and_return(dir_double)
+  end
+
+  # TESTS
+  describe '#initialize' do
+    it 'reads the config to set values' do
+      expect(GsasSync::Config).to receive(:sftp_server).once
+      described_class.new
+    end
   end
 
   describe '#connect' do

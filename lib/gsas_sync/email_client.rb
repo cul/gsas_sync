@@ -35,7 +35,15 @@ class GsasSync
       "#{FileUtils.pwd}/#{@log_file}"
     end
 
+    def send_success_email_all
+      GsasSync::Logger.stdout_logger.debug('GsasSync::EmailClient#send_success_email_all: Entry')
+      subject = SUCCESS_SUBJECT
+      body = SUCCESS_BODY
+      @recipients.each { |email| send_success_email(email, subject, body) }
+    end
+
     def send_success_email(recipient, subject, body)
+      puts 'in send success'
       attachment = log_file_str
       sender = @sender
       Mail.deliver do
@@ -46,13 +54,6 @@ class GsasSync
         add_file attachment
       end
       GsasSync::Logger.stdout_logger.debug('Success email sent')
-    end
-
-    def send_success_email_all
-      GsasSync::Logger.stdout_logger.debug('GsasSync::EmailClient#send_success_email_all: Entry')
-      subject = SUCCESS_SUBJECT
-      body = SUCCESS_BODY
-      @recipients.each { |email| send_success_email(email, subject, body) }
     end
 
     def send_failure_email_all
@@ -68,7 +69,7 @@ class GsasSync
         from sender
         to recipient
         subject subject
-        body body # body
+        body body
         add_file attachment
       end
       GsasSync::Logger.stdout_logger.debug('Failure email sent')

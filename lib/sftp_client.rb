@@ -148,9 +148,7 @@ class SftpClient
   def dissertations_dir_already_exists?(preservation_dir, uploads = 'uploads')
     GsasSync::Logger.stdout_logger.debug('GsasSync::SftpClient#dissertations_dir_already_exists(): Entry')
     remote_dissertation_directories = []
-    puts 'hey'
     sftp_session.dir.foreach(uploads) do |entry|
-      puts entry.name
       remote_dissertation_directories.push(entry.name) if entry.name.match?(Validator::DISSERTATION_DIR_REGEX)
     end
     remote_dissertation_directories.each do |match|

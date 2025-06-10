@@ -29,6 +29,11 @@ SimpleCov.start
 #
 # See https://rubydoc.info/gems/rspec-core/RSpec/Core/Configuration
 RSpec.configure do |config|
+  # From https://github.com/mikel/mail?tab=readme-ov-file#using-mail-with-testing-or-specing-libraries
+  Mail.defaults do
+    delivery_method :test
+  end
+
   # rspec-expectations config goes here. You can use an alternate
   # assertion/expectation library such as wrong or the stdlib/minitest
   # assertions if you prefer.
