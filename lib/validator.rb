@@ -8,10 +8,6 @@ require 'cul/preservation_utils'
 # contains all of the files and adheres to all validation rules
 # @parent : the yyyy_mm_dissertations/ directory under examination
 # @manifest_filename:
-# manifest-{alg}.txt is present
-# yyyy_mm_items.csv is present
-# yyyy_mm_assets.csv is present
-# data directory is present
 # VALIDAITON RULES
 # 1.  : All required files present
 # 1.1 : The manifest file exists and has an accepted algorithm in it
@@ -33,8 +29,9 @@ class Validator
   #  - dissertations_directory: Pathname object representing a yyyy_mm_dissertations.temp directory
   def initialize(dissertations_directory)
     GsasSync::Logger.stdout_logger.debug('Validator#initialize(): Entry')
-    @parent = dissertations_directory # yyyy_mm_dissertations # TODO : rename to something like "dissertation_dir_name" - parent implies this variable holds the parent of whatever we care about -- but it actually is the thing we care about.
+    @parent = dissertations_directory # abs path to yyyy_mm_dissertations.temp # TODO : rename to something like "dissertation_dir_name" - parent implies this variable holds the parent of whatever we care about -- but it actually is the thing we care about.
     @manifest_filename = ''
+    @manifest_hash = {}
     @digest_class = nil
   end
 
@@ -59,11 +56,7 @@ class Validator
     valid &= valid_items_csv?
     valid &= valid_assets_csv?
     valid &= File.directory? "#{@parent}/data"
-    if valid
-      GsasSync::Logger.progress '-- ✅ Validation Success: All required files present --'
-    else
-      GsasSync::Logger.progress '-- ️❌  Validation Failure: All required files present --'
-    end
+    log_validation_result(valid, 'All required files present')
     valid
   end
 
@@ -72,16 +65,12 @@ class Validator
     GsasSync::Logger.stdout_logger.debug('Validator#valid_manifest_file?(): Entry')
     find_manifest_file
 
-    if @manifest_filename == '' # TODO: is this case possible? Wouldn't an exception be raised before this check?
-      GsasSync::Logger.log_all_warn 'An error ocurred loading the manifest file'
-      return false
-    end
-
     # algorithm substr is present and is a valid hash format
     alg = @manifest_filename.match(MANIFEST_REGEX)[1]
     if alg.nil?
-      GsasSync::Logger.log_all_warn('Could not determine hashing algorithm from manifest')
-      return false
+      raise GsasSync::Exceptions::ValidationError, 'Could not determine hashing algorithm from manifest file name'
+    elsif !ALLOWED_ALGS.include?(alg)
+      raise GsasSync::Exceptions::ValidationError, "Unexpected hashing algorithm '#{alg}'"
     end
 
     init_manifest_digest(alg)
@@ -107,10 +96,6 @@ class Validator
   # Side effect: sets the @digest_class instance variable on success
   def init_manifest_digest(alg)
     GsasSync::Logger.stdout_logger.debug 'init_manifest_digest(): Entry'
-    unless ALLOWED_ALGS.include?(alg)
-      raise GsasSync::Exceptions::ValidationError,
-            "Unexpected hashing algorithm '#{alg}'"
-    end
 
     @digest_class = Object.const_get("Digest::#{alg.upcase}")
   end
@@ -141,11 +126,7 @@ class Validator
   # and logging any errors that are encountered in the progress log
   def no_undesirable_characters_in_file_paths?(directory = @parent)
     valid = valid_file_paths_recursive(directory)
-    if valid
-      GsasSync::Logger.progress('-- ✅ Validation Success: No files or directories contain undesirable characters --')
-    else
-      GsasSync::Logger.progress('-- ❌ Validation Failure: No files or directories contain undesirable characters --')
-    end
+    log_validation_result(valid, 'No files or directories contain undesirable characters')
     valid
   rescue StandardError => e
     GsasSync::Logger.stdout_logger.log_all_error(
@@ -183,36 +164,98 @@ class Validator
   # This also builds the @manifest_hash map (filename => checksum)
   def all_accounted_for_in_manifest?
     GsasSync::Logger.stdout_logger.debug 'all_accounted_for_in_manifest?() Entry'
-    return false unless valid_manifest_and_digest_instance_variables
+    return false unless valid_manifest_and_digest_instance_variables?
 
-    valid = true
-    @manifest_hash = {}
+    # TODO: WANT:
+    build_manifest_hash
+    valid = files_in_manifest_exist?
+    valid &= any_files_not_in_manifest?
+    log_validation_result(valid, 'All files in manifest are accounted for')
+    valid
+  end
+
+  # Populates the @manifest_hash based on the contents of the @manifest_filename
+  # Hash structure: { 'file_path' => 'checksum_value', ... }
+  def build_manifest_hash
+    GsasSync::Logger.stdout_logger.debug('Validator#build_manifest_hash: Entry')
     File.open("#{@parent}/#{@manifest_filename}", 'r') do |file_handle|
       file_handle.each_line do |line|
         checksum, file = line.split
         file = "#{@parent}/#{file.delete_prefix('./')}"
-        unless File.exist?(file)
-          valid = false
-          next
-        end
         @manifest_hash[file] = checksum
       end
     end
-    if valid
-      GsasSync::Logger.progress('-- ✅ Validation Success: All files in manifest are accounted for --')
-    else
-      GsasSync::Logger.progress('-- ❌ Validation Failure: All files in manifest are accounted for --')
-    end
-    valid
   end
 
-  def valid_manifest_and_digest_instance_variables
+  # Returns false if any of the files listed in the manifest are not present in the downloaded @parent directory
+  # Removes entries for any non-existent files from the @manifest_hash
+  def files_in_manifest_exist?
+    GsasSync::Logger.stdout_logger.debug('Validator#files_in_manifest_exist?: Entry')
+    result = true
+    @manifest_hash.each_key do |file|
+      next if File.exist?(file)
+
+      GsasSync.log_all_warn("‼️ The file #{file} is listed in the manifest file but does not exist in the downloaded directory") # rubocop:disable Layout/LineLength
+      @manifest_hash.delete(file)
+      result = false
+    end
+    result
+  end
+
+  # returns false if there are any files in the @parent directory that are not listed in the manifest file
+  # TODO : We could use this same logic in #files_in_manifest_exist? ; it's just an array difference in the other direction
+  # (manifest_files_array - downloaded_files_array)
+  def any_files_not_in_manifest?
+    GsasSync::Logger.stdout_logger.debug('Validator#any_files_not_in_manifest?: Entry')
+    raise GsasSync::Exceptions::ValidationError, 'manifest hash is undefined' if @manifest_hash.nil?
+
+    downloaded_files_array = recursive_files_array(@parent).sort
+    manifest_files_array = @manifest_hash.keys.sort
+
+    return true if downloaded_files_array == manifest_files_array
+
+    diff = downloaded_files_array - manifest_files_array
+    GsasSync::Logger.log_all_warn("‼️ The following file(s) were downloaded, but are not listed in the manifest: #{diff}") # rubocop:disable Layout/LineLength
+    false
+  end
+
+  # Returns array containing filenames (as strings) of every file under the given parent directory, recursively
+  # including nested directory's files
+  def recursive_files_array(parent)
+    array = []
+    parent.each_child do |child|
+      if child.directory?
+        next if child.children.empty? # Skip empty directories
+
+        array.push(*recursive_files_array(child))
+      else
+        next if metadata_file?(child.basename.to_s) # Skip metadata files
+
+        array.push(child.realpath.to_s)
+      end
+    end
+    array
+  end
+
+  # Returns true if the given filename is a metadata file; either an items csv, assets csv, or manifest file
+  def metadata_file?(filename)
+    GsasSync::Logger.stdout_logger.debug('Validator#metadata_file?: Entry')
+    if ["#{@date_prefix_str}_items.csv", "#{@date_prefix_str}_assets.csv", @manifest_filename].include?(filename)
+      return true
+    end
+
+    false
+  end
+
+  # Returns false and logs warning if either the @manifest_file or @digest_class instance variables are not set
+  # This would indicate that certain validation steps cannot be run
+  def valid_manifest_and_digest_instance_variables?
     if @manifest_filename == ''
       GsasSync::Logger.log_all_warn('Invalid manifest file. Unable to validate that all files in manifest are present.')
       return false
     end
     if @digest_class.nil?
-      GsasSync::Logger.log_all_warn('No valid checksum algorithm. Unable to validate that all files in manifest are present.')
+      GsasSync::Logger.log_all_warn('No valid checksum algorithm. Unable to validate that all files in manifest are present.') # rubocop:disable Layout/LineLength
       return false
     end
     true
@@ -220,10 +263,15 @@ class Validator
 
   # VALIDATION RULE 4
   def valid_checksums?
-    unless @valid_manifest # TODO: Log
-      GsasSync::Logger.log_all_warn('No valid manifest file. Unable to validate checksums.')
+    unless valid_manifest_and_digest_instance_variables?
+      GsasSync::Logger.log_all_warn('Invalid manifest file or checksum algorithm. Unable to validate checksums.')
       return false
     end
+
+    # if @manifest_filename == '' # TODO: Log
+    #   GsasSync::Logger.log_all_warn('No valid manifest file. Unable to validate checksums.')
+    #   return false
+    # end
     valid = true
     @manifest_hash.each do |file_path, checksum|
       next unless @digest_class.file(file_path).hexdigest != checksum
@@ -231,11 +279,16 @@ class Validator
       GsasSync::Logger.log_all_warn("Checksum does not match manifest value: #{file_path}")
       valid = false
     end
-    if valid
-      GsasSync::Logger.progress('-- ✅ Validation Success: All checksum values match manifest --')
-    else
-      GsasSync::Logger.progress('-- ❌  Validation Success: All checksum values match manifest --')
-    end
+    log_validation_result(valid, 'All checksum values match manifest')
     valid
+  end
+
+  def log_validation_result(valid, message)
+    if valid
+      GsasSync::Logger.progress("-- ✅ Validation Success: #{message} --")
+    else
+      GsasSync::Logger.progress("-- ❌ Validation Failure: #{message} --")
+    end
+    # TODO: consider returning valid here, then rename to log_validation_result_and_return_value
   end
 end
