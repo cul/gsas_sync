@@ -11,7 +11,7 @@ class GsasSync
   # TODO : delete unsured variable
   def initialize(_temp_dir = TEMP_DIR, uploads_dir = UPLOADS_DIR)
     GsasSync::Logger.stdout_logger.debug('Initialized GsasSync Instance')
-    @preservation_dir = Config.storage['directory'] # TODO: change 'dev_directory' to 'directory' for actual preservation dir
+    @preservation_dir = Config.storage['directory'] # absolute path to directory # TODO: change 'dev_directory' to 'directory' for actual preservation dir
     @uploads_dir = uploads_dir
     @downloaded_dirs = [] # Array of strings for each yyyy_mm_dissertations directory that was downloaded
   end
@@ -96,6 +96,17 @@ class GsasSync
     email_and_exit_failure
   end
 
+  # Identify dissertation directories that were downloaded into the temporary location and create validator instances
+  # for each of them. Returns an array of validator objects
+  def init_validators
+    GsasSync::Logger.stdout_logger.debug('GsasSync#init_validators(): Entry')
+    validators = []
+    @downloaded_dirs.each do |dir|
+      validators.push(Validator.new(Pathname.new("#{@preservation_dir}/#{dir}.temp")))
+    end
+    validators
+  end
+
   def rm_remote_files
     if GsasSync::Config.dry_run
       GsasSync::Logger.log_all 'DRY RUN: Skipping deletion of downloaded files from remote transfer server.'
@@ -109,17 +120,6 @@ class GsasSync
   rescue StandardError => e
     raise(Exceptions::SftpClientError,
           "An error occurred trying to delete the transferred files on the remote server. Error: #{e}")
-  end
-
-  # Identify dissertation directories that were downloaded into the temporary location and create validator instances
-  # for each of them. Returns an array of validator objects
-  def init_validators
-    GsasSync::Logger.stdout_logger.debug('GsasSync#init_validators(): Entry')
-    validators = []
-    @downloaded_dirs.each do |dir|
-      validators.push(Validator.new(Pathname.new("#{@preservation_dir}/#{dir}.temp")))
-    end
-    validators
   end
 
   def email_and_exit_failure
