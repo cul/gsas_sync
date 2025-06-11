@@ -43,7 +43,6 @@ class GsasSync
     end
 
     def send_success_email(recipient, subject, body)
-      puts 'in send success'
       attachment = log_file_str
       sender = @sender
       Mail.deliver do
