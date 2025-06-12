@@ -14,7 +14,9 @@ require 'cul/preservation_utils'
 # 1.2 : An yyyy_mm_items.csv file with a matching prefix exists
 # 1.3 : An yyyy_mm_assets.csv file with a matching prefix exists
 # 2.  : No undesireable characters are present in any of the file/directory names
-# 3.  : All files listed in the manifest file are present in the downloaded directory
+# 3.  : All files listed in the manifest file are accounted for
+# 3.1 : All files listed in the manifest exist in the downloaded temp directory
+# 3.2 : All files in the downloaded temp directory (besides metadata files) are listed in the manifest
 # 4.  : The checksums listed for each file in the manifest match the checksums for what was downloaded
 class Validator
   DATE_PREFIX_LEN = 7
@@ -47,7 +49,7 @@ class Validator
     @files_present && @no_bad_chars && @valid_manifest && @checksums
   end
 
-  # VALIDATION RULE 1
+  # VALIDATION RULE 1 ##################################################################################################
   def all_required_files_present?
     GsasSync::Logger.stdout_logger.debug('Validator#all_required_files_present(): Entry')
     @date_prefix_str = @parent.basename.to_s[0...DATE_PREFIX_LEN]
@@ -121,7 +123,7 @@ class Validator
     false
   end
 
-  # VALIDATION RULE 2
+  # VALIDATION RULE 2 ##################################################################################################
   # This method recursively checks nested directories, visiting each item
   # and logging any errors that are encountered in the progress log
   def no_undesirable_characters_in_file_paths?(directory = @parent)
@@ -160,16 +162,14 @@ class Validator
     end
   end
 
-  # VALIDATION RULE 3
-  # This also builds the @manifest_hash map (filename => checksum)
+  # VALIDATION RULE 3 ##################################################################################################
   def all_accounted_for_in_manifest?
     GsasSync::Logger.stdout_logger.debug 'all_accounted_for_in_manifest?() Entry'
     return false unless valid_manifest_and_digest_instance_variables?
 
-    # TODO: WANT:
     build_manifest_hash
     valid = files_in_manifest_exist?
-    valid &= any_files_not_in_manifest?
+    valid &= all_downloaded_files_in_manifest?
     log_validation_result(valid, 'All files in manifest are accounted for')
     valid
   end
@@ -187,6 +187,7 @@ class Validator
     end
   end
 
+  # VALIDATION RULE 3.1
   # Returns false if any of the files listed in the manifest are not present in the downloaded @parent directory
   # Removes entries for any non-existent files from the @manifest_hash
   def files_in_manifest_exist?
@@ -195,17 +196,18 @@ class Validator
     @manifest_hash.each_key do |file|
       next if File.exist?(file)
 
-      GsasSync.log_all_warn("‼️ The file #{file} is listed in the manifest file but does not exist in the downloaded directory") # rubocop:disable Layout/LineLength
+      GsasSync::Logger.log_all_warn("‼️ The file #{file} is listed in the manifest file but does not exist in the downloaded directory") # rubocop:disable Layout/LineLength
       @manifest_hash.delete(file)
       result = false
     end
     result
   end
 
-  # returns false if there are any files in the @parent directory that are not listed in the manifest file
-  # TODO : We could use this same logic in #files_in_manifest_exist? ; it's just an array difference in the other direction
-  # (manifest_files_array - downloaded_files_array)
-  def any_files_not_in_manifest?
+  # VALIDATION RULE 3.2
+  # returns true if all files in the @parent directory are listed in the manifest file
+  # TODO : We could use this same logic in #files_in_manifest_exist? ; it's just an array difference the other direction
+  # (manifest_files_array - downloaded_files_array) -- this may be a performant refactor to do in the future.
+  def all_downloaded_files_in_manifest?
     GsasSync::Logger.stdout_logger.debug('Validator#any_files_not_in_manifest?: Entry')
     raise GsasSync::Exceptions::ValidationError, 'manifest hash is undefined' if @manifest_hash.nil?
 
@@ -221,7 +223,7 @@ class Validator
 
   # Returns array containing filenames (as strings) of every file under the given parent directory, recursively
   # including nested directory's files
-  def recursive_files_array(parent)
+  def recursive_files_array(parent = @parent)
     array = []
     parent.each_child do |child|
       if child.directory?
@@ -231,7 +233,7 @@ class Validator
       else
         next if metadata_file?(child.basename.to_s) # Skip metadata files
 
-        array.push(child.realpath.to_s)
+        array.push(child.to_s)
       end
     end
     array
@@ -261,20 +263,15 @@ class Validator
     true
   end
 
-  # VALIDATION RULE 4
+  # VALIDATION RULE 4 ##################################################################################################
   def valid_checksums?
     unless valid_manifest_and_digest_instance_variables?
       GsasSync::Logger.log_all_warn('Invalid manifest file or checksum algorithm. Unable to validate checksums.')
       return false
     end
-
-    # if @manifest_filename == '' # TODO: Log
-    #   GsasSync::Logger.log_all_warn('No valid manifest file. Unable to validate checksums.')
-    #   return false
-    # end
     valid = true
     @manifest_hash.each do |file_path, checksum|
-      next unless @digest_class.file(file_path).hexdigest != checksum
+      next if @digest_class.file(file_path).hexdigest == checksum
 
       GsasSync::Logger.log_all_warn("Checksum does not match manifest value: #{file_path}")
       valid = false
@@ -290,5 +287,6 @@ class Validator
       GsasSync::Logger.progress("-- ❌ Validation Failure: #{message} --")
     end
     # TODO: consider returning valid here, then rename to log_validation_result_and_return_value
+    # con : this may make testing a little awkward; mock the method to have it return whatever was passed as first param...
   end
 end

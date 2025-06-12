@@ -9,11 +9,10 @@ module GsasSync::ArgParser
   ############################## METHODS #######################################
   # Parse the arguments given thru the command line to determine the old and new
   # CSV files we are comaring.
-  def self.parse_cl_args
+  def self.parse_cl_args # rubocop:disable Metrics/AbcSize
     options = {}
     OptionParser.new { |opts|
       opts.banner = USAGE_STR
-      # TODO : debug why log level cant be specified from command line...
       opts.on('-l [LLVL]', '--log-level [LLVL]',
               "Specify the runtime log level (debug, info, warn, error, fatal - default is '#{log_lvl_to_str(DEFAULT_STDOUT_LOG_LEVEL)}')") do |v|
         options[:log_lvl] = str_to_log_lvl v

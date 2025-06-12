@@ -18,7 +18,7 @@ require 'optparse'
 ################################ SCRIPT ########################################
 ################################################################################
 args = GsasSync::ArgParser.parse_cl_args
-args => { log_lvl: log_lvl, dry_run: _dry_run }
+args => { log_lvl: _log_lvl, dry_run: _dry_run }
 
 if GsasSync::Config.dry_run
   GsasSync::Logger.log_all('Gsas Sync is running in dry run mode.')

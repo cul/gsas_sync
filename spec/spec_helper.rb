@@ -30,6 +30,9 @@ SimpleCov.start
 # See https://rubydoc.info/gems/rspec-core/RSpec/Core/Configuration
 RSpec.configure do |config|
   # From https://github.com/mikel/mail?tab=readme-ov-file#using-mail-with-testing-or-specing-libraries
+  # NOTE: Our tests do not use the test delivery mode nor TestMailer; they are poorly documented and implementation
+  # was taking too long. Lower test coverage is tolerable in this case, however, as the methods wrapping Mail::deliver
+  # are very succinct.
   Mail.defaults do
     delivery_method :test
   end
