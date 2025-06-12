@@ -29,8 +29,8 @@ RSpec.describe Validator do
     allow(logger_double).to receive(:debug)
     allow(logger_double).to receive(:info)
 
-    # Mock this method in general
-    allow(test_validator).to receive(:log_validation_result)
+    # # Mock this method in general
+    # allow(test_validator).to receive(:log_validation_result)
 
     # Create temporary files for validation
     File.write(base_dir.join('2000_01_items.csv'), 'item data')
@@ -617,18 +617,6 @@ RSpec.describe Validator do
         expect(digest_instance_double).to receive(:hexdigest).once
         test_validator.valid_checksums?
       end
-    end
-  end
-
-  describe '#log_validation_result' do
-    it 'logs to progress if valid' do
-      expect(GsasSync::Logger).to receive(:progress).once
-      test_validator.log_validation_result(false, '')
-    end
-
-    it 'logs to progress if invalid' do
-      expect(GsasSync::Logger).to receive(:progress).once
-      test_validator.log_validation_result(true, '')
     end
   end
 end

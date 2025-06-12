@@ -280,6 +280,8 @@ class Validator
     valid
   end
 
+  private
+
   def log_validation_result(valid, message)
     if valid
       GsasSync::Logger.progress("-- ✅ Validation Success: #{message} --")
