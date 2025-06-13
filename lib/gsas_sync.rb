@@ -11,7 +11,7 @@ class GsasSync
   # TODO : delete unsured variable
   def initialize(_temp_dir = TEMP_DIR, uploads_dir = UPLOADS_DIR)
     GsasSync::Logger.stdout_logger.debug('Initialized GsasSync Instance')
-    @preservation_dir = Config.storage['directory'] # absolute path to directory # TODO: change 'dev_directory' to 'directory' for actual preservation dir
+    @preservation_dir = Config.storage['directory'] # absolute path to directory
     @uploads_dir = uploads_dir
     @downloaded_dirs = [] # Array of strings for each yyyy_mm_dissertations directory that was downloaded
   end

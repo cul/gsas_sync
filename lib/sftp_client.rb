@@ -85,12 +85,12 @@ class SftpClient
         case event
         when :open
           # args[0] : file metadata
-          GsasSync::Logger.stdout_logger.debug("starting download: #{args[0].remote} -> #{args[0].local} (#{args[0].size} bytes}")
+          GsasSync::Logger.stdout_logger.debug("starting download: #{args[0].remote} -> #{args[0].local} (#{args[0].size} bytes}") # rubocop:disable Layout/LineLength
         when :get
           # args[0] : file metadata
           # args[1] : byte offset in remote file
           # args[2] : data that was received
-          GsasSync::Logger.stdout_logger.debug "writing #{args[2].length} bytes to #{args[0].local} starting at #{args[1]}"
+          GsasSync::Logger.stdout_logger.debug "writing #{args[2].length} bytes to #{args[0].local} starting at #{args[1]}" # rubocop:disable Layout/LineLength
         when :close
           # args[0] : file metadata
           GsasSync::Logger.stdout_logger.debug("finished with #{args[0].remote}")
@@ -110,8 +110,7 @@ class SftpClient
 
   # rm_recursive uses an open @sftp_session
   # Recursively delete all the contents of the given directory, and then the directory itself
-  # TODO : we may be able to delete all empty directories at once with rmdir!("#{directory}/*")
-  def rm_recursive(directory)
+  def rm_recursive(directory) # rubocop:disable Metrics/AbcSize,Metrics/CyclomaticComplexity
     GsasSync::Logger.log_all("Removing the #{directory} directory on the remote server...")
     # First, delete all files
     sftp_session.dir.glob(directory, '**/*').each do |entry|

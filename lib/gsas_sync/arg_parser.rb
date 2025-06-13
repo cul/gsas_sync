@@ -14,7 +14,7 @@ module GsasSync::ArgParser
     OptionParser.new { |opts|
       opts.banner = USAGE_STR
       opts.on('-l [LLVL]', '--log-level [LLVL]',
-              "Specify the runtime log level (debug, info, warn, error, fatal - default is '#{log_lvl_to_str(DEFAULT_STDOUT_LOG_LEVEL)}')") do |v|
+              "Specify the runtime log level (debug, info, warn, error, fatal - default is '#{log_lvl_to_str(DEFAULT_STDOUT_LOG_LEVEL)}')") do |v| # rubocop:disable Layout/LineLength
         options[:log_lvl] = str_to_log_lvl v
       end
 

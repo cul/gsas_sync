@@ -6,7 +6,7 @@ require 'cul/preservation_utils'
 
 # The validator class is capable of validating a yyyy_mm_dissertations/ directory
 # contains all of the files and adheres to all validation rules
-# @parent : the yyyy_mm_dissertations/ directory under examination
+# @dissertation_dir : the yyyy_mm_dissertations/ directory under examination
 # @manifest_filename:
 # VALIDAITON RULES
 # 1.  : All required files present
@@ -31,7 +31,7 @@ class Validator
   #  - dissertations_directory: Pathname object representing a yyyy_mm_dissertations.temp directory
   def initialize(dissertations_directory)
     GsasSync::Logger.stdout_logger.debug('Validator#initialize(): Entry')
-    @parent = dissertations_directory # abs path to yyyy_mm_dissertations.temp # TODO : rename to something like "dissertation_dir_name" - parent implies this variable holds the parent of whatever we care about -- but it actually is the thing we care about.
+    @dissertation_dir = dissertations_directory # abs path to yyyy_mm_dissertations.temp
     @manifest_filename = ''
     @manifest_hash = {}
     @digest_class = nil
@@ -41,7 +41,7 @@ class Validator
   # Runs each validation check and returns true if all of the validation checks passed
   # False otherwise
   def run_validations
-    GsasSync::Logger.log_all("-- -- Validating files for #{@parent.basename}/ -- --")
+    GsasSync::Logger.log_all("-- -- Validating files for #{@dissertation_dir.basename}/ -- --")
     @files_present = all_required_files_present?
     @no_bad_chars = no_undesirable_characters_in_file_paths?
     @valid_manifest = all_accounted_for_in_manifest?
@@ -52,12 +52,12 @@ class Validator
   # VALIDATION RULE 1 ##################################################################################################
   def all_required_files_present?
     GsasSync::Logger.stdout_logger.debug('Validator#all_required_files_present(): Entry')
-    @date_prefix_str = @parent.basename.to_s[0...DATE_PREFIX_LEN]
+    @date_prefix_str = @dissertation_dir.basename.to_s[0...DATE_PREFIX_LEN]
     valid = true
     valid &= valid_manifest_file?
     valid &= valid_items_csv?
     valid &= valid_assets_csv?
-    valid &= File.directory? "#{@parent}/data"
+    valid &= File.directory? "#{@dissertation_dir}/data"
     log_validation_result(valid, 'All required files present')
     valid
   end
@@ -85,7 +85,7 @@ class Validator
   # Side effet: sets the @manifest_filename instance variable on success
   def find_manifest_file
     GsasSync::Logger.stdout_logger.debug 'find_manifest_file(): Entry'
-    matches = @parent.children.select do |child|
+    matches = @dissertation_dir.children.select do |child|
       child.basename.to_s.match?(MANIFEST_REGEX)
     end
     if matches.length != 1 # There should be only one manifest file per dissertation dir
@@ -105,7 +105,7 @@ class Validator
   # VALIDATION RULE 1.2
   def valid_items_csv?
     GsasSync::Logger.stdout_logger.debug 'Validator#valid_items_csv(): Entry'
-    expectation = "#{@parent}/#{@date_prefix_str}_items.csv"
+    expectation = "#{@dissertation_dir}/#{@date_prefix_str}_items.csv"
     return true if File.exist?(expectation)
 
     GsasSync::Logger.log_all_warn("Could not find yyyy_mm_items.csv file. Expected: #{expectation}.")
@@ -116,7 +116,7 @@ class Validator
   def valid_assets_csv?
     GsasSync::Logger.stdout_logger.debug 'valid_assets_csv()'
 
-    expectation = "#{@parent}/#{@date_prefix_str}_assets.csv"
+    expectation = "#{@dissertation_dir}/#{@date_prefix_str}_assets.csv"
     return true if File.exist?(expectation)
 
     GsasSync::Logger.log_all_warn("Could not find yyyy_mm_assets.csv file. Expected: #{expectation}.")
@@ -126,7 +126,7 @@ class Validator
   # VALIDATION RULE 2 ##################################################################################################
   # This method recursively checks nested directories, visiting each item
   # and logging any errors that are encountered in the progress log
-  def no_undesirable_characters_in_file_paths?(directory = @parent)
+  def no_undesirable_characters_in_file_paths?(directory = @dissertation_dir)
     valid = valid_file_paths_recursive(directory)
     log_validation_result(valid, 'No files or directories contain undesirable characters')
     valid
@@ -139,7 +139,7 @@ class Validator
 
   # Validate each file and directory recursively, logging any that fail the validation
   # to the progress log
-  def valid_file_paths_recursive(directory = @parent)
+  def valid_file_paths_recursive(directory = @dissertation_dir)
     valid = Cul::PreservationUtils::FilePath.valid_file_path? directory.basename
     log_validated_filepath(directory, valid)
     directory.each_child do |f|
@@ -178,17 +178,17 @@ class Validator
   # Hash structure: { 'file_path' => 'checksum_value', ... }
   def build_manifest_hash
     GsasSync::Logger.stdout_logger.debug('Validator#build_manifest_hash: Entry')
-    File.open("#{@parent}/#{@manifest_filename}", 'r') do |file_handle|
+    File.open("#{@dissertation_dir}/#{@manifest_filename}", 'r') do |file_handle|
       file_handle.each_line do |line|
         checksum, file = line.split
-        file = "#{@parent}/#{file.delete_prefix('./')}"
+        file = "#{@dissertation_dir}/#{file.delete_prefix('./')}"
         @manifest_hash[file] = checksum
       end
     end
   end
 
   # VALIDATION RULE 3.1
-  # Returns false if any of the files listed in the manifest are not present in the downloaded @parent directory
+  # Returns false if any of the files listed in the manifest are not present in the downloaded @dissertation_dir
   # Removes entries for any non-existent files from the @manifest_hash
   def files_in_manifest_exist?
     GsasSync::Logger.stdout_logger.debug('Validator#files_in_manifest_exist?: Entry')
@@ -204,14 +204,14 @@ class Validator
   end
 
   # VALIDATION RULE 3.2
-  # returns true if all files in the @parent directory are listed in the manifest file
+  # returns true if all files in the @dissertation_dir directory are listed in the manifest file
   # TODO : We could use this same logic in #files_in_manifest_exist? ; it's just an array difference the other direction
   # (manifest_files_array - downloaded_files_array) -- this may be a performant refactor to do in the future.
   def all_downloaded_files_in_manifest?
     GsasSync::Logger.stdout_logger.debug('Validator#any_files_not_in_manifest?: Entry')
     raise GsasSync::Exceptions::ValidationError, 'manifest hash is undefined' if @manifest_hash.nil?
 
-    downloaded_files_array = recursive_files_array(@parent).sort
+    downloaded_files_array = recursive_files_array(@dissertation_dir).sort
     manifest_files_array = @manifest_hash.keys.sort
 
     return true if downloaded_files_array == manifest_files_array
@@ -223,7 +223,7 @@ class Validator
 
   # Returns array containing filenames (as strings) of every file under the given parent directory, recursively
   # including nested directory's files
-  def recursive_files_array(parent = @parent)
+  def recursive_files_array(parent = @dissertation_dir)
     array = []
     parent.each_child do |child|
       if child.directory?
@@ -289,6 +289,6 @@ class Validator
       GsasSync::Logger.progress("-- ❌ Validation Failure: #{message} --")
     end
     # TODO: consider returning valid here, then rename to log_validation_result_and_return_value
-    # con : this may make testing a little awkward; mock the method to have it return whatever was passed as first param...
+    # con : this may make testing a little awkward; mock the method to have it return whatever was passed as first param
   end
 end
