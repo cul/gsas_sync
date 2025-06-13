@@ -86,7 +86,7 @@ Alternatively, you can run your own server to use as the test transfer server. T
 
 ### Validation Rules
 ```
-1.   All required files present 
+1.  All required files present 
     1.1. The manifest file exists and has an accepted algorithm in it
     1.2. An yyyy_mm_items.csv file with a matching prefix exists
     1.3. An yyyy_mm_assets.csv file with a matching prefix exist
