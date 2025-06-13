@@ -67,7 +67,7 @@ class GsasSync::Logger
     def progress_log_append(message)
       return progress(message) unless @progress_log.closed?
 
-      filepath = Pathname.new("#{GsasSync::Config.logs_directory}progress.log")
+      filepath = Pathname.new(@pathname)
       File.open(filepath, 'a') do |file|
         file << "#{time_prefix}\t#{message}\n"
       end
