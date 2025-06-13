@@ -170,7 +170,7 @@ class GsasSync
     mail_client.send_success_email_all
   rescue StandardError => e
     raise(GsasSync::Exceptions::EmailError,
-          "An error occurred while sending an email via SMTP. This email was a notification that the process succeeded. This failure will be logged and the program will now attempt to send a failure email notification. Error: #{e}") # rubocop:disable Layout/LineLength
+          "An error occurred while sending an email via SMTP. This email was a notification that the process succeeded. This failure will be logged and the program will terminate. Error: #{e}") # rubocop:disable Layout/LineLength
   end
 
   # Gracefully terminates the program, closing any open OS resources
