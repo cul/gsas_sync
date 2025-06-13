@@ -2,12 +2,12 @@
 
 The GsasSync script manages the transfer of dissertations from GSAS to the library's collections.
 
-In particular, it will run on a cron job once a month in order to syncronize and verify the transfer of GSAS dissertations. It retrieves the files from an [AWS Transfer Server](http://docs.aws.amazon.com/transfer/latest/userguide/what-is-aws-transfer-family.html) via [SFTP](https://en.wikipedia.org/wiki/SSH_File_Transfer_Protocol), verifies that the correct files have been downloaded successfully and in the expected format, and then removes them from the remote server. This Transfer Server is managed by GSAS, who will upload each month and maintain backup copies.
+In particular, it will run on a cron job once a month in order to syncronize and verify the transfer of GSAS dissertations. It retrieves the files from an [AWS Transfer Server](http://docs.aws.amazon.com/transfer/latest/userguide/what-is-aws-transfer-family.html) via [SFTP](https://en.wikipedia.org/wiki/SSH_File_Transfer_Protocol), verifies that the correct files have been downloaded successfully and in the expected format, and then removes them from the remote server. This Transfer Server is managed by GSAS, who will upload each month and maintain backup copies. An email will be sent to relevant parties when the process succeeds or fails.
 
 ## Local development
-#### Install and run the script
+### Install and run the script
 ```
-git clone UPDATE_WITH_CUL_REPO
+git clone git@github.com:cul/gsas_sync.git
 cd gsas_sync
 
 bundle install    # Install dependencies
@@ -18,7 +18,7 @@ sshuttle -r YOUR_UNI@connect.cul.columbia.edu 0.0.0.0/0
 
 ruby gsas_sync_main.rb      # Run the script
 ```
-#### Command Line Interface
+### Command Line Interface
 The gsas sync script supports two command line arguments for setting the standard out logging level and running the script in dry-run mode. Use the `-h` flag to see the usage script:
 ```
 % ruby gsas_sync_main.rb --help
@@ -27,7 +27,7 @@ Usage:
     -l, --log-level [LLVL]           Specify the runtime log level (debug, info, warn, error, fatal - default is 'debug')
         --dry-run [DRYRUN]           Run as dry-run
 ```
-##### Dry-Run Mode
+#### Dry-Run Mode
 The gsas sync script supports a dry-run option to download and validate transfer directories without making any permanent changes to either the rmeote server or the local host.
 ```
 ruby gsas_sync_main.rb --dry-run
@@ -39,7 +39,27 @@ In detail:
  - a progress log file will be created and saved under the configurable logs location
  - no email notifications will be sent
  - skipped operations (like removing the files from the remote transfer server, moving the `.temp` directory to a permanent one, sending email notifications, e.g.) will be logged
-### Ready your local dev environment
+### Readying your local dev environment
+#### Configuration file
+The script expects a configuration file located in `<project_root>/config/config.yml`. It should have the following structure:
+```
+config:
+  sftp_server:
+    host: TRANSFER_SERVER_IP_OR_HOSTNAME
+    user: TRANSFER_SERVER_USER
+    key: PATH_TO_SSH_KEY
+  mail_server:
+    host: MAIL_SERVER_IP_OR_HOSTNAME
+    port: PORT
+    sender_address: "gsas-sync-no-reply@library.columbia.edu" (CAN BE ANY EMAIL YOU WOULD LIKE)
+    recipients:
+      - EMAIL_RECPIENT_ADDRESS
+      - ...
+  logs:
+    directory: LOGS_DIRECTORY_NAME
+  storage:
+    directory: ABSOLUTE_PATH_TO_FINAL_STORAGE_DIRECTORY
+```
 #### Using ssh tunnelling to the test transfer server:
 While developing locally, we connect to the test transfer server as the special transfer user. You should obtain a copy of that user's private SSH key and put it in your dev machine's `~/.ssh` directory. Additionally, create a local `config/config.yml` and populate it with the proper credentials. Refer to spec/fixtures/config.yml for reference.
 
@@ -48,10 +68,7 @@ The test and production transfer servers will only allow connections from `conne
 sshuttle -r YOUR_UNI@connect.cul.columbia.edu 0.0.0.0/0
 ```
 
-### Validation Rules
-todo
-
-#### Using a VM as a test server:
+#### Using a VM as a test server (Reccomended):
 Alternatively, you can run your own server to use as the test transfer server. This is nice because you can put whatever you want in the server you spin up, without worrying about access rights or muddying the test transfer server that is maintained by LIT. Here is a brief guide to setting this up:
 1. Install virtual machine software. On mac, we recommend [VMWare Fusion](https://www.vmware.com/products/desktop-hypervisor/workstation-and-fusion) (this will require account creation in order to install). On windows, [WSL2](https://learn.microsoft.com/en-us/windows/wsl/install) would likely be a great option.
 2. Download an ISO appropriate for our needs and spin up a VM. I use an [Ubuntu Live Server (for ARM)](https://ubuntu.com/download/server/arm) image. _Make sure to download the ARM architecture ISO if using a mac with Apple Silicon_. Boot and set up the new VM.
@@ -89,6 +106,20 @@ uploads/
 │  ├─ manifest-sha256.txt
 │  ├─ 2025_05_items.csv
 │  ├─ 2025_05_assets.csv
+
+### Validation Rules
+```
+1.   All required files present 
+    1.1. The manifest file exists and has an accepted algorithm in it
+    1.2. An yyyy_mm_items.csv file with a matching prefix exists
+    1.3. An yyyy_mm_assets.csv file with a matching prefix exist
+2.  No undesireable characters are present in any of the file/directory names
+3.  All files listed in the manifest file are accounted for
+    3.1.  All files listed in the manifest exist in the downloaded temp directory
+    3.2.  All files in the downloaded temp directory (besides metadata files) are listed in the manifest
+4.  The checksums listed for each file in the manifest match the checksums for what was downloaded
+```
+
 ```
 ### Testing
 ```
