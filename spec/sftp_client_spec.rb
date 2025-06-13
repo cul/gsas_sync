@@ -157,12 +157,12 @@ RSpec.describe SftpClient do
     end
 
     it 'raises an error if #dl_recursive raises an error' do
-      allow(test_sftp_client).to receive(:dl_recursive).and_raise(StandardError, 'custom error')
+      allow(test_sftp_client).to receive(:dl_recursive).and_raise(StandardError, 'test error')
 
       expect {
         test_sftp_client.dl_dissertation_dirs_to_temp('remote_src',
                                                       'local_dst')
-      }.to raise_error(StandardError, 'custom error')
+      }.to raise_error(StandardError, 'test error')
     end
   end
 
@@ -191,17 +191,17 @@ RSpec.describe SftpClient do
 
     it 're-raises any errors caught removing files' do
       allow(sftp_session_double).to receive(:remove!).with("#{test_directory}/#{fake_file.name}")
-                                                     .and_raise(StandardError, 'custom error')
+                                                     .and_raise(StandardError, 'test error')
 
-      expect { test_sftp_client.rm_recursive(test_directory) }.to raise_error(StandardError, 'custom error')
+      expect { test_sftp_client.rm_recursive(test_directory) }.to raise_error(StandardError, 'test error')
     end
 
     it 're-raises any errors caught removing directories' do
       allow(sftp_session_double).to receive(:rmdir!).with("#{test_directory}/#{fake_dir.name}").and_raise(
-        StandardError, 'custom error'
+        StandardError, 'test error'
       )
 
-      expect { test_sftp_client.rm_recursive(test_directory) }.to raise_error(StandardError, 'custom error')
+      expect { test_sftp_client.rm_recursive(test_directory) }.to raise_error(StandardError, 'test error')
     end
 
     it "skips removing '.' and '..' directories" do
@@ -275,7 +275,7 @@ RSpec.describe SftpClient do
 
   describe '#ls' do
     it 'raises an SftpClientError if any exceptions occur' do
-      allow(test_sftp_client).to receive(:sftp_session).and_raise(StandardError, 'custom error')
+      allow(test_sftp_client).to receive(:sftp_session).and_raise(StandardError, 'test error')
 
       expect { test_sftp_client.ls }.to raise_error(GsasSync::Exceptions::SftpClientError)
     end

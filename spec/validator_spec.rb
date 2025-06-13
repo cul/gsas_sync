@@ -380,7 +380,7 @@ RSpec.describe Validator do
   end
 
   # THIS METHOD (AND RELATED HELPER METHODS) HAS BEEN HEAVILY REFACTORED!
-  describe '#all_accounted_for_in_manifest?' do # TODO: focus & we are here
+  describe '#all_accounted_for_in_manifest?' do
     before do
       allow(test_validator).to receive(:valid_manifest_and_digest_instance_variables?).and_return(true)
       allow(test_validator).to receive(:build_manifest_hash)

@@ -16,6 +16,7 @@ class GsasSync
     @downloaded_dirs = [] # Array of strings for each yyyy_mm_dissertations directory that was downloaded
   end
 
+  # rename the downloaded yyyy_mm_dissertations.temp directory by removing the '.temp' suffix
   def rename_temp_dirs
     Logger.stdout_logger.debug 'GsasSync#rename_temp_dirs: Entry'
     if GsasSync::Config.dry_run
@@ -27,9 +28,11 @@ class GsasSync
     end
   end
 
+  # Deletes any .temp directories from the @preservation_dir on the local filesystem
   def rm_temp_dirs
     GsasSync::Logger.stdout_logger.debug('GsasSync#rm_temp_dirs(): Entry')
     @downloaded_dirs.each do |dir|
+      # TODO : pros and cons of using ::remove or ::remove_secure instead of ::rm_rf ?
       FileUtils.rm_rf("#{@preservation_dir}/#{dir}.temp") if File.directory?("#{@preservation_dir}/#{dir}.temp")
     end
   rescue StandardError => e
@@ -70,7 +73,7 @@ class GsasSync
   # Verifies that the preservation directory described in the configuration file exists on the local machine
   # Returns nil. Raises a GsasSync::Exceptions::GsasError if it is not present.
   def verify_dissertations_directory_exists
-    return if File.directory? @preservation_dir # TODO: change to directory
+    return if File.directory? @preservation_dir
 
     raise GsasSync::Exceptions::GsasError,
           'The directory described in the config file where downloaded files should be stored does not exist on the local machine.' # rubocop:disable Layout/LineLength
