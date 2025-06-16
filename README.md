@@ -86,7 +86,7 @@ Alternatively, you can run your own server to use as the test transfer server. T
 
 ### Validation Rules
 ```
-1.   All required files present 
+1.  All required files present 
     1.1. The manifest file exists and has an accepted algorithm in it
     1.2. An yyyy_mm_items.csv file with a matching prefix exists
     1.3. An yyyy_mm_assets.csv file with a matching prefix exist
@@ -119,18 +119,6 @@ uploads/
 │  ├─ manifest-sha256.txt
 │  ├─ 2025_05_items.csv
 │  ├─ 2025_05_assets.csv
-```
-1.   All required files present 
-    1.1. The manifest file exists and has an accepted algorithm in it
-    1.2. An yyyy_mm_items.csv file with a matching prefix exists
-    1.3. An yyyy_mm_assets.csv file with a matching prefix exist
-2.  No undesireable characters are present in any of the file/directory names
-3.  All files listed in the manifest file are accounted for
-    3.1.  All files listed in the manifest exist in the downloaded temp directory
-    3.2.  All files in the downloaded temp directory (besides metadata files) are listed in the manifest
-4.  The checksums listed for each file in the manifest match the checksums for what was downloaded
-```
-
 ```
 ### Testing
 ```
