@@ -31,6 +31,8 @@ RSpec.describe SftpClient do
 
   before do
     # Mock logging
+    allow(GsasSync::Logger).to receive(:log_all)
+    allow(GsasSync::Logger).to receive(:progress)
     allow(GsasSync::Logger).to receive(:stdout_logger).and_return(logger_double)
     allow(logger_double).to receive(:debug)
     allow(logger_double).to receive(:info)

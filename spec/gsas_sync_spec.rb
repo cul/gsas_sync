@@ -407,6 +407,7 @@ RSpec.describe GsasSync do
 
   describe '#log_summary' do
     before do
+      allow(GsasSync::Logger).to receive(:progress)
       test_gsas_sync.instance_variable_set(:@downloaded_dirs, test_downloaded_dirs)
     end
 

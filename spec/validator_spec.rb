@@ -292,11 +292,11 @@ RSpec.describe Validator do
   describe '#no_undesirable_characters_in_file_paths?' do
     context 'if the result is valid' do
       before do
+        expect(test_validator).to receive(:log_validation_result)
         allow(test_validator).to receive(:valid_file_paths_recursive).and_return(true)
       end
 
       it 'logs the result' do
-        expect(test_validator).to receive(:log_validation_result)
         test_validator.no_undesirable_characters_in_file_paths?
       end
 

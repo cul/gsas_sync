@@ -131,7 +131,7 @@ class Validator
     log_validation_result(valid, 'No files or directories contain undesirable characters')
     valid
   rescue StandardError => e
-    GsasSync::Logger.stdout_logger.log_all_error(
+    GsasSync::Logger.log_all_error(
       'An unexpected error ocurred while validating filepaths for undesirable characters.', e
     )
     false
