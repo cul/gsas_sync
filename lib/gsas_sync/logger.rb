@@ -48,8 +48,8 @@ class GsasSync::Logger
     end
 
     def begin_step(title, description = '')
-      stdout_logger.info("Step: #{@progress_step}.) #{title}#{' -- ' unless description.empty?}#{description}")
-      progress_log << pl_begin_step(@progress_step, title, description)
+      stdout_logger.info("Step: #{progress_step}.) #{title}#{' -- ' unless description.empty?}#{description}")
+      progress_log << pl_begin_step(progress_step, title, description)
       @progress_step += 1
     end
 
@@ -82,6 +82,10 @@ class GsasSync::Logger
     end
 
     private
+
+    def progress_step
+      @progress_step ||= 1
+    end
 
     # Creates a new progress log file in the location defined in the configuration
     # Returns the open log file.
