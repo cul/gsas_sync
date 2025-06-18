@@ -8,9 +8,7 @@ class GsasSync
 
   # @preservation_dir : the name of the local directory where files will be downloaded to
   # @uploads_dir : the name of the remote directory containing the yyyy_mm_dissertations directories
-  # TODO : delete unsured variable
   def initialize(_temp_dir = TEMP_DIR, uploads_dir = UPLOADS_DIR)
-    GsasSync::Logger.stdout_logger.debug('Initialized GsasSync Instance')
     @preservation_dir = Config.storage['directory'] # absolute path to directory
     @uploads_dir = uploads_dir
     @downloaded_dirs = [] # Array of strings for each yyyy_mm_dissertations directory that was downloaded
@@ -18,7 +16,6 @@ class GsasSync
 
   # rename the downloaded yyyy_mm_dissertations.temp directory by removing the '.temp' suffix
   def rename_temp_dirs
-    Logger.stdout_logger.debug 'GsasSync#rename_temp_dirs: Entry'
     if GsasSync::Config.dry_run
       GsasSync::Logger.log_all 'DRY RUN: Skipping renaming of temp directories; temp directories will be removed.'
       return
@@ -30,7 +27,6 @@ class GsasSync
 
   # Deletes any .temp directories from the @preservation_dir on the local filesystem
   def rm_temp_dirs
-    GsasSync::Logger.stdout_logger.debug('GsasSync#rm_temp_dirs(): Entry')
     @downloaded_dirs.each do |dir|
       # TODO : pros and cons of using ::remove or ::remove_secure instead of ::rm_rf ?
       FileUtils.rm_rf("#{@preservation_dir}/#{dir}.temp") if File.directory?("#{@preservation_dir}/#{dir}.temp")
@@ -43,7 +39,6 @@ class GsasSync
   # Attempts to download files from the remote server to a temporary directory using the SFTP client
   # Will handle any exceptions that occur, including fatal error
   def download_files_to_temp_dir
-    GsasSync::Logger.stdout_logger.debug('GsasSync#download_files_to_temp_dir(): Entry')
     verify_dissertations_directory_exists
     attempt_download
     GsasSync::Logger.progress('Successful transfer from remote host to local temporary directory')
@@ -81,8 +76,6 @@ class GsasSync
 
   # Create Validator objects for each yyyy_mm_dissertations directory and runs all validations, returning the result
   def validate_downloaded_files
-    GsasSync::Logger.stdout_logger.debug('GsasSync#validate_downloaded_files(): Entry')
-
     validators = init_validators
     raise GsasSync::Exceptions::ValidationError, 'Unable to locate any dissertation directory' if validators.empty?
 
@@ -102,7 +95,6 @@ class GsasSync
   # Identify dissertation directories that were downloaded into the temporary location and create validator instances
   # for each of them. Returns an array of validator objects
   def init_validators
-    GsasSync::Logger.stdout_logger.debug('GsasSync#init_validators(): Entry')
     validators = []
     @downloaded_dirs.each do |dir|
       validators.push(Validator.new(Pathname.new("#{@preservation_dir}/#{dir}.temp")))
@@ -164,7 +156,6 @@ class GsasSync
   end
 
   def send_success_email
-    GsasSync::Logger.stdout_logger.debug('GsasSync#send_success_email(): Entry')
     GsasSync::Logger.log_all('Closing progress log file in order to send email...')
     GsasSync::Logger.close_progress_log_file
     mail_client.send_success_email_all
@@ -200,6 +191,6 @@ class GsasSync
   private
 
   def mail_client
-    @mail_client ||= EmailClient.new(GsasSync::Logger.log_file_name) # TODO: do we need to close this?
+    @mail_client ||= EmailClient.new(GsasSync::Logger.log_file_name)
   end
 end
