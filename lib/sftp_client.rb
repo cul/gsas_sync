@@ -11,19 +11,19 @@ class SftpClient
   end
 
   def connect
-    GsasSync::Logger.stdout_logger.debug("Connecting to #{@user}@#{@host}...")
+    GsasSync::Logger.stdout_logger.info "Connecting to #{@user}@#{@host}..."
     begin
       sftp_session.connect!
     rescue StandardError => e
       raise GsasSync::Exceptions::SftpClientError, "Error while connecting to #{@user}@#{@host}. #{error_string(e)}"
     end
-    GsasSync::Logger.stdout_logger.info("SFTP connection established with #{@user}@#{@host}")
+    GsasSync::Logger.stdout_logger.info "SFTP connection established with #{@user}@#{@host}"
   end
 
   # Closes the SFTP connection and SSH connection if they are open
   # TODO: leave ssh session open...
   def disconnect
-    GsasSync::Logger.stdout_logger.debug 'Closing SFTP connection...'
+    GsasSync::Logger.stdout_logger.info 'Closing SFTP connection...'
     begin
       @sftp_session.close_channel unless @sftp_session.closed?
       @ssh_session.close unless @ssh_session.closed?
@@ -55,7 +55,6 @@ class SftpClient
   # local_dst/yyyy_mm_dissertations.temp/
   # Side effect: sets the @dissertation_dirs instance variable
   def dl_dissertation_dirs_to_temp(remote_uploads_dir, local_dissertations_dir)
-    GsasSync::Logger.stdout_logger.debug('dl_dissertation_dirs_to_temp(): Entry')
     @dissertation_dirs = []
     # Determine how many yyyy_mm_dissertations directories are present on the remote
     sftp_session.dir.foreach(remote_uploads_dir) do |entry|
@@ -85,7 +84,7 @@ class SftpClient
         case event
         when :open
           # args[0] : file metadata
-          GsasSync::Logger.stdout_logger.debug("starting download: #{args[0].remote} -> #{args[0].local} (#{args[0].size} bytes}") # rubocop:disable Layout/LineLength
+          GsasSync::Logger.stdout_logger.debug "starting download: #{args[0].remote} -> #{args[0].local} (#{args[0].size} bytes}" # rubocop:disable Layout/LineLength
         when :get
           # args[0] : file metadata
           # args[1] : byte offset in remote file
@@ -93,7 +92,7 @@ class SftpClient
           GsasSync::Logger.stdout_logger.debug "writing #{args[2].length} bytes to #{args[0].local} starting at #{args[1]}" # rubocop:disable Layout/LineLength
         when :close
           # args[0] : file metadata
-          GsasSync::Logger.stdout_logger.debug("finished with #{args[0].remote}")
+          GsasSync::Logger.stdout_logger.debug "finished with #{args[0].remote}"
           GsasSync::Logger.progress(" - #{args[0].local}")
         when :mkdir
           # args[0] : local path name
@@ -105,13 +104,13 @@ class SftpClient
     rescue StandardError => e
       raise GsasSync::Exceptions::SftpClientError, "Error while downloading files via SFTP. #{error_string(e)}"
     end
-    GsasSync::Logger.log_all("Downloaded files from #{@user}@#{@host}:#{remote_src}/ -> #{local_dst}/")
+    GsasSync::Logger.log_all "Downloaded files from #{@user}@#{@host}:#{remote_src}/ -> #{local_dst}/"
   end
 
   # rm_recursive uses an open @sftp_session
   # Recursively delete all the contents of the given directory, and then the directory itself
   def rm_recursive(directory) # rubocop:disable Metrics/AbcSize,Metrics/CyclomaticComplexity
-    GsasSync::Logger.log_all("Removing the #{directory} directory on the remote server...")
+    GsasSync::Logger.log_all "Removing the #{directory} directory on the remote server..."
     # First, delete all files
     sftp_session.dir.glob(directory, '**/*').each do |entry|
       next unless entry.file?
@@ -145,7 +144,6 @@ class SftpClient
   #  - preservation_dir : absolute path of the preservations directory on the local machine
   #  - uploads : name of the directory on the remote that contains the yyyy_mm_dissertations directories
   def dissertations_dir_already_exists?(preservation_dir, uploads = 'uploads')
-    GsasSync::Logger.stdout_logger.debug('GsasSync::SftpClient#dissertations_dir_already_exists(): Entry')
     remote_dissertation_directories = []
     sftp_session.dir.foreach(uploads) do |entry|
       remote_dissertation_directories.push(entry.name) if entry.name.match?(Validator::DISSERTATION_DIR_REGEX)
@@ -173,5 +171,3 @@ class SftpClient
     "Error [#{err.class.name}] : #{err.message}"
   end
 end
-
-# TODO: in close use safe navigation op ... ?
