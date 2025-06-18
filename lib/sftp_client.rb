@@ -21,7 +21,7 @@ class SftpClient
   end
 
   # Closes the SFTP connection and SSH connection if they are open
-  # TODO: leave ssh session open...
+  # TODO: leave ssh session open...?
   def disconnect
     GsasSync::Logger.stdout_logger.info 'Closing SFTP connection...'
     begin
