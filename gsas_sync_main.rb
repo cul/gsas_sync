@@ -20,6 +20,13 @@ require 'optparse'
 args = GsasSync::ArgParser.parse_cl_args
 args => { log_lvl: _log_lvl, dry_run: _dry_run }
 
+begin
+  GsasSync::Config.validate_config
+rescue StandardError => e
+  GsasSync::Logger.stdout_logger.fatal("Could not load values from config file. Script will terminate. Error: #{e}")
+  exit(1)
+end
+
 if GsasSync::Config.dry_run
   GsasSync::Logger.log_all('Gsas Sync is running in dry run mode.')
   GsasSync::Logger.log_all('Files will be downloaded temporarily, validated, then deleted.'\

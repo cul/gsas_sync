@@ -16,13 +16,13 @@ RSpec.describe GsasSync do
     allow(logger_double).to receive(:info)
     allow(logger_double).to receive(:debug)
 
-    allow(GsasSync::Config).to receive(:storage).and_return({ 'directory' => 'path/to/storage/directory' })
+    allow(GsasSync::Config).to receive(:storage_directory).and_return('path/to/storage/directory')
     allow(GsasSync::Config).to receive(:dry_run).and_return(false) # Override in example groups for dry run testing
   end
 
   describe '#initialize' do
     it 'reads the config to set directory value' do
-      expect(GsasSync::Config).to receive(:storage)
+      expect(GsasSync::Config).to receive(:storage_directory)
       test_gsas_sync
     end
   end

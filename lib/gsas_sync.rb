@@ -9,7 +9,7 @@ class GsasSync
   # @preservation_dir : the name of the local directory where files will be downloaded to
   # @uploads_dir : the name of the remote directory containing the yyyy_mm_dissertations directories
   def initialize(_temp_dir = TEMP_DIR, uploads_dir = UPLOADS_DIR)
-    @preservation_dir = Config.storage['directory'] # absolute path to directory
+    @preservation_dir = Config.storage_directory # absolute path to directory
     @uploads_dir = uploads_dir
     @downloaded_dirs = [] # Array of strings for each yyyy_mm_dissertations directory that was downloaded
   end
@@ -181,7 +181,7 @@ class GsasSync
     end
     temp = GsasSync::Config.dry_run ? '.temp' : ''
     @downloaded_dirs.each do |dir|
-      GsasSync::Logger.progress_log_dir_contents("#{GsasSync::Config.storage['directory']}/#{dir}#{temp}")
+      GsasSync::Logger.progress_log_dir_contents("#{GsasSync::Config.storage_directory}/#{dir}#{temp}")
     end
     GsasSync::Logger.progress('The transfered files have been deleted on the remote transfer server')
     GsasSync::Logger.progress('vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv')
