@@ -28,7 +28,6 @@ class GsasSync
   # Deletes any .temp directories from the @preservation_dir on the local filesystem
   def rm_temp_dirs
     @downloaded_dirs.each do |dir|
-      # TODO : pros and cons of using ::remove or ::remove_secure instead of ::rm_rf ?
       FileUtils.rm_rf("#{@preservation_dir}/#{dir}.temp") if File.directory?("#{@preservation_dir}/#{dir}.temp")
     end
   rescue StandardError => e
@@ -119,7 +118,7 @@ class GsasSync
 
   def email_and_exit_failure
     if GsasSync::Config.dry_run
-      GsasSync::Logger.log_all('DRY RUN: Skipping success email notification.')
+      GsasSync::Logger.log_all('DRY RUN: Skipping failure email notification.')
     else
       GsasSync::Logger.log_all_fatal('Sending failure email notification. This will close the progress.log file...')
       send_failure_email

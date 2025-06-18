@@ -30,7 +30,6 @@ class Validator
   # Params:
   #  - dissertations_directory: Pathname object representing a yyyy_mm_dissertations.temp directory
   def initialize(dissertations_directory)
-    GsasSync::Logger.stdout_logger.debug('Validator#initialize(): Entry')
     @dissertation_dir = dissertations_directory # abs path to yyyy_mm_dissertations.temp
     @manifest_filename = ''
     @manifest_hash = {}
@@ -51,7 +50,6 @@ class Validator
 
   # VALIDATION RULE 1 ##################################################################################################
   def all_required_files_present?
-    GsasSync::Logger.stdout_logger.debug('Validator#all_required_files_present(): Entry')
     @date_prefix_str = @dissertation_dir.basename.to_s[0...DATE_PREFIX_LEN]
     valid = true
     valid &= valid_manifest_file?
@@ -64,7 +62,6 @@ class Validator
 
   # VALIDATION RULE 1.1
   def valid_manifest_file?
-    GsasSync::Logger.stdout_logger.debug('Validator#valid_manifest_file?(): Entry')
     find_manifest_file
 
     # algorithm substr is present and is a valid hash format
@@ -84,7 +81,6 @@ class Validator
 
   # Side effet: sets the @manifest_filename instance variable on success
   def find_manifest_file
-    GsasSync::Logger.stdout_logger.debug 'find_manifest_file(): Entry'
     matches = @dissertation_dir.children.select do |child|
       child.basename.to_s.match?(MANIFEST_REGEX)
     end
@@ -97,14 +93,11 @@ class Validator
 
   # Side effect: sets the @digest_class instance variable on success
   def init_manifest_digest(alg)
-    GsasSync::Logger.stdout_logger.debug 'init_manifest_digest(): Entry'
-
     @digest_class = Object.const_get("Digest::#{alg.upcase}")
   end
 
   # VALIDATION RULE 1.2
   def valid_items_csv?
-    GsasSync::Logger.stdout_logger.debug 'Validator#valid_items_csv(): Entry'
     expectation = "#{@dissertation_dir}/#{@date_prefix_str}_items.csv"
     return true if File.exist?(expectation)
 
@@ -114,8 +107,6 @@ class Validator
 
   # VALIDATION RULE 1.3
   def valid_assets_csv?
-    GsasSync::Logger.stdout_logger.debug 'valid_assets_csv()'
-
     expectation = "#{@dissertation_dir}/#{@date_prefix_str}_assets.csv"
     return true if File.exist?(expectation)
 
@@ -164,7 +155,6 @@ class Validator
 
   # VALIDATION RULE 3 ##################################################################################################
   def all_accounted_for_in_manifest?
-    GsasSync::Logger.stdout_logger.debug 'all_accounted_for_in_manifest?() Entry'
     return false unless valid_manifest_and_digest_instance_variables?
 
     build_manifest_hash
@@ -177,7 +167,6 @@ class Validator
   # Populates the @manifest_hash based on the contents of the @manifest_filename
   # Hash structure: { 'file_path' => 'checksum_value', ... }
   def build_manifest_hash
-    GsasSync::Logger.stdout_logger.debug('Validator#build_manifest_hash: Entry')
     File.open("#{@dissertation_dir}/#{@manifest_filename}", 'r') do |file_handle|
       file_handle.each_line do |line|
         checksum, file = line.split
@@ -191,7 +180,6 @@ class Validator
   # Returns false if any of the files listed in the manifest are not present in the downloaded @dissertation_dir
   # Removes entries for any non-existent files from the @manifest_hash
   def files_in_manifest_exist?
-    GsasSync::Logger.stdout_logger.debug('Validator#files_in_manifest_exist?: Entry')
     result = true
     @manifest_hash.each_key do |file|
       next if File.exist?(file)
@@ -208,7 +196,6 @@ class Validator
   # TODO : We could use this same logic in #files_in_manifest_exist? ; it's just an array difference the other direction
   # (manifest_files_array - downloaded_files_array) -- this may be a performant refactor to do in the future.
   def all_downloaded_files_in_manifest?
-    GsasSync::Logger.stdout_logger.debug('Validator#any_files_not_in_manifest?: Entry')
     raise GsasSync::Exceptions::ValidationError, 'manifest hash is undefined' if @manifest_hash.nil?
 
     downloaded_files_array = recursive_files_array(@dissertation_dir).sort
@@ -241,7 +228,6 @@ class Validator
 
   # Returns true if the given filename is a metadata file; either an items csv, assets csv, or manifest file
   def metadata_file?(filename)
-    GsasSync::Logger.stdout_logger.debug('Validator#metadata_file?: Entry')
     if ["#{@date_prefix_str}_items.csv", "#{@date_prefix_str}_assets.csv", @manifest_filename].include?(filename)
       return true
     end
