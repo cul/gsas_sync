@@ -4,7 +4,7 @@ module GsasSync::ArgParser
   ############################## GLOBALS #######################################
   USAGE_STR = "Usage:\n\truby gsas_sync_main.rb [options]"
 
-  DEFAULT_STDOUT_LOG_LEVEL = Logger::DEBUG
+  DEFAULT_STDOUT_LOG_LEVEL = Logger::INFO
 
   ############################## METHODS #######################################
   # Parse the arguments given thru the command line to determine the old and new
