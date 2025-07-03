@@ -3,9 +3,9 @@ require 'capistrano/setup'
 
 # Include default deployment tasks
 require 'capistrano/deploy'
-
+require 'capistrano/bundler' # include bundle install task
 require 'capistrano/cul'
-require 'whenever/capistrano'
+require 'whenever/capistrano' # include whenever tasks
 
 # Load the SCM plugin appropriate to your project:
 #

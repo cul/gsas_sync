@@ -25,5 +25,7 @@ gem 'mail', '~> 2.8', '>= 2.8.1'
 gem 'time', '~> 0.4.1'
 
 gem 'capistrano', require: false
+gem 'capistrano-bundler', '~> 2.0'
 gem 'capistrano-cul', require: false
+
 gem 'whenever', require: false

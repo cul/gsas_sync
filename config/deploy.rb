@@ -23,6 +23,8 @@ set :branch, 'LDPD-451' # TODO: use main when actually deploying
 set :deploy_to, -> { "/tmp/gsas_deployment_testing/#{fetch(:deploy_name)}" } # Override this for each environment
 
 set :whenever_identifier, -> { "#{fetch(:application)}_#{fetch(:stage)}" }
+# set :whenever_command, 'bundle exec whenever'
+set :whenever_roles, %w[app]
 
 # Default value for :format is :airbrussh.
 # set :format, :airbrussh
@@ -40,6 +42,15 @@ append :linked_files, 'config/config.yml'
 
 # Default value for linked_dirs is []
 # append :linked_dirs, "log", "tmp/pids", "tmp/cache", "tmp/sockets", "public/system", "vendor", "storage"
+append :linked_dirs, '.bundle'
+
+# RVM Setup, for selecting the correct ruby version (instead of capistrano-rvm gem)
+set :rvm_ruby_version, fetch(:deploy_name) # This RVM alias must exist on the server
+[:rake, :gem, :bundle, :ruby].each do |command_to_prefix|
+  SSHKit.config.command_map.prefix[command_to_prefix].push(
+    "#{fetch(:rvm_custom_path, '~/.rvm')}/bin/rvm #{fetch(:rvm_ruby_version)} do"
+  )
+end
 
 # Default value for default_env is {}
 # set :default_env, { path: "/opt/ruby/bin:$PATH" }
