@@ -23,3 +23,7 @@ gem 'rainbow', '~> 3.1'
 gem 'mail', '~> 2.8', '>= 2.8.1'
 
 gem 'time', '~> 0.4.1'
+
+gem 'capistrano', require: false
+gem 'capistrano-cul', require: false
+gem 'whenever', require: false
