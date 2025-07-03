@@ -20,6 +20,6 @@
 #   end
 # end
 
-every 1.minute do
-  command 'date > /tmp/hello.txt'
-end
+# every 1.minute do
+#   command 'date > /tmp/hello.txt'
+# end

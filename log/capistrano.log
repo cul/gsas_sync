@@ -2551,3 +2551,220 @@ mkdir: cannot create directory ‘/tmp/gsas_deployment_testing/gsas_sync_staging
 	from /tmp/gsas_deployment_testing/gsas_sync_staging/shared/bundle/ruby/3.2.0/gems/bundler-2.6.5/exe/bundle:20:in `<top (required)>'
 	from /home/ldpdserv/.rvm-alma8/gems/ruby-3.2.2/bin/bundle:25:in `load'
 	from /home/ldpdserv/.rvm-alma8/gems/ruby-3.2.2/bin/bundle:25:in `<main>'
+  INFO ---------------------------------------------------------------------------
+  INFO START 2025-07-03 18:01:41 -0400 cap staging deploy
+  INFO ---------------------------------------------------------------------------
+  INFO [7f81e88c] Running /usr/bin/env mkdir -p /tmp as ldpdserv@diglib-service-prod1.cul.columbia.edu
+ DEBUG [7f81e88c] Command: /usr/bin/env mkdir -p /tmp
+  INFO [7f81e88c] Finished in 0.719 seconds with exit status 0 (successful).
+ DEBUG Uploading /tmp/git-ssh-55bfc07f360de0889db5.sh 0.0%
+  INFO Uploading /tmp/git-ssh-55bfc07f360de0889db5.sh 100.0%
+  INFO [19024788] Running /usr/bin/env chmod 700 /tmp/git-ssh-55bfc07f360de0889db5.sh as ldpdserv@diglib-service-prod1.cul.columbia.edu
+ DEBUG [19024788] Command: /usr/bin/env chmod 700 /tmp/git-ssh-55bfc07f360de0889db5.sh
+  INFO [19024788] Finished in 0.213 seconds with exit status 0 (successful).
+  INFO [c3132b76] Running /usr/bin/env git ls-remote git@github.com:cul/gsas_sync.git/ HEAD as ldpdserv@diglib-service-prod1.cul.columbia.edu
+ DEBUG [c3132b76] Command: ( export GIT_ASKPASS="/bin/echo" GIT_SSH="/tmp/git-ssh-55bfc07f360de0889db5.sh" ; /usr/bin/env git ls-remote git@github.com:cul/gsas_sync.git/ HEAD )
+ DEBUG [c3132b76] 	4078327a508732472d639bc1728698e986b3366f	HEAD
+  INFO [c3132b76] Finished in 1.001 seconds with exit status 0 (successful).
+  INFO [e9a00405] Running /usr/bin/env mkdir -p /tmp/gsas_deployment_testing/gsas_sync_staging/shared /tmp/gsas_deployment_testing/gsas_sync_staging/releases as ldpdserv@diglib-service-prod1.cul.columbia.edu
+ DEBUG [e9a00405] Command: /usr/bin/env mkdir -p /tmp/gsas_deployment_testing/gsas_sync_staging/shared /tmp/gsas_deployment_testing/gsas_sync_staging/releases
+  INFO [e9a00405] Finished in 0.229 seconds with exit status 0 (successful).
+  INFO [521607d7] Running /usr/bin/env mkdir -p /tmp/gsas_deployment_testing/gsas_sync_staging/shared/.bundle as ldpdserv@diglib-service-prod1.cul.columbia.edu
+ DEBUG [521607d7] Command: /usr/bin/env mkdir -p /tmp/gsas_deployment_testing/gsas_sync_staging/shared/.bundle
+  INFO [521607d7] Finished in 0.226 seconds with exit status 0 (successful).
+  INFO [8ff1f677] Running /usr/bin/env mkdir -p /tmp/gsas_deployment_testing/gsas_sync_staging/shared/config as ldpdserv@diglib-service-prod1.cul.columbia.edu
+ DEBUG [8ff1f677] Command: /usr/bin/env mkdir -p /tmp/gsas_deployment_testing/gsas_sync_staging/shared/config
+  INFO [8ff1f677] Finished in 0.218 seconds with exit status 0 (successful).
+ DEBUG [215370fa] Running [ -f /tmp/gsas_deployment_testing/gsas_sync_staging/shared/config/config.yml ] as ldpdserv@diglib-service-prod1.cul.columbia.edu
+ DEBUG [215370fa] Command: [ -f /tmp/gsas_deployment_testing/gsas_sync_staging/shared/config/config.yml ]
+ DEBUG [215370fa] Finished in 0.215 seconds with exit status 0 (successful).
+ DEBUG [7eb5cb89] Running [ -f /tmp/gsas_deployment_testing/gsas_sync_staging/current/REVISION ] as ldpdserv@diglib-service-prod1.cul.columbia.edu
+ DEBUG [7eb5cb89] Command: [ -f /tmp/gsas_deployment_testing/gsas_sync_staging/current/REVISION ]
+ DEBUG [7eb5cb89] Finished in 0.213 seconds with exit status 0 (successful).
+ DEBUG [4d0d6a40] Running /usr/bin/env cat /tmp/gsas_deployment_testing/gsas_sync_staging/current/REVISION 2>/dev/null as ldpdserv@diglib-service-prod1.cul.columbia.edu
+ DEBUG [4d0d6a40] Command: /usr/bin/env cat /tmp/gsas_deployment_testing/gsas_sync_staging/current/REVISION 2>/dev/null
+ DEBUG [4d0d6a40] 	5485efbe34266224b5835cfbb807f3d37ef2b03f
+ DEBUG [4d0d6a40] Finished in 0.238 seconds with exit status 0 (successful).
+ DEBUG [5fbb191f] Running [ -f /tmp/gsas_deployment_testing/gsas_sync_staging/current/REVISION_TIME ] as ldpdserv@diglib-service-prod1.cul.columbia.edu
+ DEBUG [5fbb191f] Command: [ -f /tmp/gsas_deployment_testing/gsas_sync_staging/current/REVISION_TIME ]
+ DEBUG [5fbb191f] Finished in 0.215 seconds with exit status 0 (successful).
+ DEBUG [f44b0924] Running /usr/bin/env cat /tmp/gsas_deployment_testing/gsas_sync_staging/current/REVISION_TIME 2>/dev/null as ldpdserv@diglib-service-prod1.cul.columbia.edu
+ DEBUG [f44b0924] Command: /usr/bin/env cat /tmp/gsas_deployment_testing/gsas_sync_staging/current/REVISION_TIME 2>/dev/null
+ DEBUG [f44b0924] 	1751578022
+ DEBUG [f44b0924] Finished in 0.241 seconds with exit status 0 (successful).
+ DEBUG [19e6a4e5] Running [ -f /tmp/gsas_deployment_testing/gsas_sync_staging/repo/HEAD ] as ldpdserv@diglib-service-prod1.cul.columbia.edu
+ DEBUG [19e6a4e5] Command: [ -f /tmp/gsas_deployment_testing/gsas_sync_staging/repo/HEAD ]
+ DEBUG [19e6a4e5] Finished in 0.217 seconds with exit status 0 (successful).
+  INFO The repository mirror is at /tmp/gsas_deployment_testing/gsas_sync_staging/repo
+ DEBUG [c0b3b02c] Running if test ! -d /tmp/gsas_deployment_testing/gsas_sync_staging/repo; then echo "Directory does not exist '/tmp/gsas_deployment_testing/gsas_sync_staging/repo'" 1>&2; false; fi as ldpdserv@diglib-service-prod1.cul.columbia.edu
+ DEBUG [c0b3b02c] Command: if test ! -d /tmp/gsas_deployment_testing/gsas_sync_staging/repo; then echo "Directory does not exist '/tmp/gsas_deployment_testing/gsas_sync_staging/repo'" 1>&2; false; fi
+ DEBUG [c0b3b02c] Finished in 0.234 seconds with exit status 0 (successful).
+  INFO [224ac3bf] Running /usr/bin/env git remote set-url origin git@github.com:cul/gsas_sync.git/ as ldpdserv@diglib-service-prod1.cul.columbia.edu
+ DEBUG [224ac3bf] Command: cd /tmp/gsas_deployment_testing/gsas_sync_staging/repo && ( export GIT_ASKPASS="/bin/echo" GIT_SSH="/tmp/git-ssh-55bfc07f360de0889db5.sh" ; /usr/bin/env git remote set-url origin git@github.com:cul/gsas_sync.git/ )
+  INFO [224ac3bf] Finished in 0.243 seconds with exit status 0 (successful).
+  INFO [0dfa8da5] Running /usr/bin/env git remote update --prune as ldpdserv@diglib-service-prod1.cul.columbia.edu
+ DEBUG [0dfa8da5] Command: cd /tmp/gsas_deployment_testing/gsas_sync_staging/repo && ( export GIT_ASKPASS="/bin/echo" GIT_SSH="/tmp/git-ssh-55bfc07f360de0889db5.sh" ; /usr/bin/env git remote update --prune )
+ DEBUG [0dfa8da5] 	From github.com:cul/gsas_sync
+   5485efb..4078327  LDPD-451          -> LDPD-451
+   5485efb..4078327  refs/pull/1/head  -> refs/pull/1/head
+ + eca5204...206161c refs/pull/1/merge -> refs/pull/1/merge  (forced update)
+  INFO [0dfa8da5] Finished in 1.072 seconds with exit status 0 (successful).
+ DEBUG [3ba3edd2] Running if test ! -d /tmp/gsas_deployment_testing/gsas_sync_staging/repo; then echo "Directory does not exist '/tmp/gsas_deployment_testing/gsas_sync_staging/repo'" 1>&2; false; fi as ldpdserv@diglib-service-prod1.cul.columbia.edu
+ DEBUG [3ba3edd2] Command: if test ! -d /tmp/gsas_deployment_testing/gsas_sync_staging/repo; then echo "Directory does not exist '/tmp/gsas_deployment_testing/gsas_sync_staging/repo'" 1>&2; false; fi
+ DEBUG [3ba3edd2] Finished in 0.235 seconds with exit status 0 (successful).
+  INFO [b3839a01] Running /usr/bin/env mkdir -p /tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703220145 as ldpdserv@diglib-service-prod1.cul.columbia.edu
+ DEBUG [b3839a01] Command: cd /tmp/gsas_deployment_testing/gsas_sync_staging/repo && ( export GIT_ASKPASS="/bin/echo" GIT_SSH="/tmp/git-ssh-55bfc07f360de0889db5.sh" ; /usr/bin/env mkdir -p /tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703220145 )
+  INFO [b3839a01] Finished in 0.232 seconds with exit status 0 (successful).
+  INFO [165d1002] Running /usr/bin/env git archive LDPD-451 | /usr/bin/env tar -x -f - -C /tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703220145 as ldpdserv@diglib-service-prod1.cul.columbia.edu
+ DEBUG [165d1002] Command: cd /tmp/gsas_deployment_testing/gsas_sync_staging/repo && ( export GIT_ASKPASS="/bin/echo" GIT_SSH="/tmp/git-ssh-55bfc07f360de0889db5.sh" ; /usr/bin/env git archive LDPD-451 | /usr/bin/env tar -x -f - -C /tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703220145 )
+  INFO [165d1002] Finished in 0.250 seconds with exit status 0 (successful).
+ DEBUG [7a4e08cd] Running if test ! -d /tmp/gsas_deployment_testing/gsas_sync_staging/repo; then echo "Directory does not exist '/tmp/gsas_deployment_testing/gsas_sync_staging/repo'" 1>&2; false; fi as ldpdserv@diglib-service-prod1.cul.columbia.edu
+ DEBUG [7a4e08cd] Command: if test ! -d /tmp/gsas_deployment_testing/gsas_sync_staging/repo; then echo "Directory does not exist '/tmp/gsas_deployment_testing/gsas_sync_staging/repo'" 1>&2; false; fi
+ DEBUG [7a4e08cd] Finished in 0.236 seconds with exit status 0 (successful).
+ DEBUG [2cf7f003] Running /usr/bin/env git rev-list --max-count=1 LDPD-451 as ldpdserv@diglib-service-prod1.cul.columbia.edu
+ DEBUG [2cf7f003] Command: cd /tmp/gsas_deployment_testing/gsas_sync_staging/repo && ( export GIT_ASKPASS="/bin/echo" GIT_SSH="/tmp/git-ssh-55bfc07f360de0889db5.sh" ; /usr/bin/env git rev-list --max-count=1 LDPD-451 )
+ DEBUG [2cf7f003] 	4078327a508732472d639bc1728698e986b3366f
+ DEBUG [2cf7f003] Finished in 0.246 seconds with exit status 0 (successful).
+ DEBUG [98e56a72] Running if test ! -d /tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703220145; then echo "Directory does not exist '/tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703220145'" 1>&2; false; fi as ldpdserv@diglib-service-prod1.cul.columbia.edu
+ DEBUG [98e56a72] Command: if test ! -d /tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703220145; then echo "Directory does not exist '/tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703220145'" 1>&2; false; fi
+ DEBUG [98e56a72] Finished in 0.227 seconds with exit status 0 (successful).
+  INFO [8728eea0] Running /usr/bin/env echo "4078327a508732472d639bc1728698e986b3366f" > REVISION as ldpdserv@diglib-service-prod1.cul.columbia.edu
+ DEBUG [8728eea0] Command: cd /tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703220145 && /usr/bin/env echo "4078327a508732472d639bc1728698e986b3366f" > REVISION
+  INFO [8728eea0] Finished in 0.231 seconds with exit status 0 (successful).
+ DEBUG [02d3d60b] Running if test ! -d /tmp/gsas_deployment_testing/gsas_sync_staging/repo; then echo "Directory does not exist '/tmp/gsas_deployment_testing/gsas_sync_staging/repo'" 1>&2; false; fi as ldpdserv@diglib-service-prod1.cul.columbia.edu
+ DEBUG [02d3d60b] Command: if test ! -d /tmp/gsas_deployment_testing/gsas_sync_staging/repo; then echo "Directory does not exist '/tmp/gsas_deployment_testing/gsas_sync_staging/repo'" 1>&2; false; fi
+ DEBUG [02d3d60b] Finished in 0.218 seconds with exit status 0 (successful).
+ DEBUG [7f0c4001] Running /usr/bin/env git --no-pager log -1 --pretty=format:"%ct" LDPD-451 as ldpdserv@diglib-service-prod1.cul.columbia.edu
+ DEBUG [7f0c4001] Command: cd /tmp/gsas_deployment_testing/gsas_sync_staging/repo && ( export GIT_ASKPASS="/bin/echo" GIT_SSH="/tmp/git-ssh-55bfc07f360de0889db5.sh" ; /usr/bin/env git --no-pager log -1 --pretty=format:"%ct" LDPD-451 )
+ DEBUG [7f0c4001] 	1751580093
+ DEBUG [7f0c4001] Finished in 0.228 seconds with exit status 0 (successful).
+ DEBUG [935bc4ea] Running if test ! -d /tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703220145; then echo "Directory does not exist '/tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703220145'" 1>&2; false; fi as ldpdserv@diglib-service-prod1.cul.columbia.edu
+ DEBUG [935bc4ea] Command: if test ! -d /tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703220145; then echo "Directory does not exist '/tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703220145'" 1>&2; false; fi
+ DEBUG [935bc4ea] Finished in 0.238 seconds with exit status 0 (successful).
+  INFO [1038a185] Running /usr/bin/env echo "1751580093" > REVISION_TIME as ldpdserv@diglib-service-prod1.cul.columbia.edu
+ DEBUG [1038a185] Command: cd /tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703220145 && /usr/bin/env echo "1751580093" > REVISION_TIME
+  INFO [1038a185] Finished in 0.244 seconds with exit status 0 (successful).
+  INFO [fb9fd6ca] Running /usr/bin/env mkdir -p /tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703220145/config as ldpdserv@diglib-service-prod1.cul.columbia.edu
+ DEBUG [fb9fd6ca] Command: /usr/bin/env mkdir -p /tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703220145/config
+  INFO [fb9fd6ca] Finished in 0.230 seconds with exit status 0 (successful).
+ DEBUG [51ee2df7] Running [ -L /tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703220145/config/config.yml ] as ldpdserv@diglib-service-prod1.cul.columbia.edu
+ DEBUG [51ee2df7] Command: [ -L /tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703220145/config/config.yml ]
+ DEBUG [51ee2df7] Finished in 0.232 seconds with exit status 1 (failed).
+ DEBUG [22a53adb] Running [ -f /tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703220145/config/config.yml ] as ldpdserv@diglib-service-prod1.cul.columbia.edu
+ DEBUG [22a53adb] Command: [ -f /tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703220145/config/config.yml ]
+ DEBUG [22a53adb] Finished in 0.221 seconds with exit status 1 (failed).
+  INFO [71c7e89a] Running /usr/bin/env ln -s /tmp/gsas_deployment_testing/gsas_sync_staging/shared/config/config.yml /tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703220145/config/config.yml as ldpdserv@diglib-service-prod1.cul.columbia.edu
+ DEBUG [71c7e89a] Command: /usr/bin/env ln -s /tmp/gsas_deployment_testing/gsas_sync_staging/shared/config/config.yml /tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703220145/config/config.yml
+  INFO [71c7e89a] Finished in 0.223 seconds with exit status 0 (successful).
+  INFO [42049a00] Running /usr/bin/env mkdir -p /tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703220145 as ldpdserv@diglib-service-prod1.cul.columbia.edu
+ DEBUG [42049a00] Command: /usr/bin/env mkdir -p /tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703220145
+  INFO [42049a00] Finished in 0.218 seconds with exit status 0 (successful).
+ DEBUG [1c2da986] Running [ -L /tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703220145/.bundle ] as ldpdserv@diglib-service-prod1.cul.columbia.edu
+ DEBUG [1c2da986] Command: [ -L /tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703220145/.bundle ]
+ DEBUG [1c2da986] Finished in 0.228 seconds with exit status 1 (failed).
+ DEBUG [561ee2b2] Running [ -d /tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703220145/.bundle ] as ldpdserv@diglib-service-prod1.cul.columbia.edu
+ DEBUG [561ee2b2] Command: [ -d /tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703220145/.bundle ]
+ DEBUG [561ee2b2] Finished in 0.236 seconds with exit status 1 (failed).
+  INFO [7da97f58] Running /usr/bin/env ln -s /tmp/gsas_deployment_testing/gsas_sync_staging/shared/.bundle /tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703220145/.bundle as ldpdserv@diglib-service-prod1.cul.columbia.edu
+ DEBUG [7da97f58] Command: /usr/bin/env ln -s /tmp/gsas_deployment_testing/gsas_sync_staging/shared/.bundle /tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703220145/.bundle
+  INFO [7da97f58] Finished in 0.224 seconds with exit status 0 (successful).
+ DEBUG [2745d839] Running if test ! -d /tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703220145; then echo "Directory does not exist '/tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703220145'" 1>&2; false; fi as ldpdserv@diglib-service-prod1.cul.columbia.edu
+ DEBUG [2745d839] Command: if test ! -d /tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703220145; then echo "Directory does not exist '/tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703220145'" 1>&2; false; fi
+ DEBUG [2745d839] Finished in 0.223 seconds with exit status 0 (successful).
+  INFO [f58d6ea2] Running ~/.rvm-alma8/bin/rvm gsas_sync_staging do bundle config --local deployment true as ldpdserv@diglib-service-prod1.cul.columbia.edu
+ DEBUG [f58d6ea2] Command: cd /tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703220145 && ~/.rvm-alma8/bin/rvm gsas_sync_staging do bundle config --local deployment true
+  INFO [f58d6ea2] Finished in 2.578 seconds with exit status 0 (successful).
+  INFO [ecdfa10e] Running ~/.rvm-alma8/bin/rvm gsas_sync_staging do bundle config --local path /tmp/gsas_deployment_testing/gsas_sync_staging/shared/bundle as ldpdserv@diglib-service-prod1.cul.columbia.edu
+ DEBUG [ecdfa10e] Command: cd /tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703220145 && ~/.rvm-alma8/bin/rvm gsas_sync_staging do bundle config --local path /tmp/gsas_deployment_testing/gsas_sync_staging/shared/bundle
+  INFO [ecdfa10e] Finished in 1.363 seconds with exit status 0 (successful).
+  INFO [49ad97ed] Running ~/.rvm-alma8/bin/rvm gsas_sync_staging do bundle config --local without development:test as ldpdserv@diglib-service-prod1.cul.columbia.edu
+ DEBUG [49ad97ed] Command: cd /tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703220145 && ~/.rvm-alma8/bin/rvm gsas_sync_staging do bundle config --local without development:test
+  INFO [49ad97ed] Finished in 1.300 seconds with exit status 0 (successful).
+ DEBUG [67d2e004] Running if test ! -d /tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703220145; then echo "Directory does not exist '/tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703220145'" 1>&2; false; fi as ldpdserv@diglib-service-prod1.cul.columbia.edu
+ DEBUG [67d2e004] Command: if test ! -d /tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703220145; then echo "Directory does not exist '/tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703220145'" 1>&2; false; fi
+ DEBUG [67d2e004] Finished in 0.240 seconds with exit status 0 (successful).
+ DEBUG [b3ecdc60] Running ~/.rvm-alma8/bin/rvm gsas_sync_staging do bundle check as ldpdserv@diglib-service-prod1.cul.columbia.edu
+ DEBUG [b3ecdc60] Command: cd /tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703220145 && ~/.rvm-alma8/bin/rvm gsas_sync_staging do bundle check
+ DEBUG [b3ecdc60] 	The following gems are missing
+ * capistrano-bundler (2.1.1)
+Install missing gems with `bundle install`
+ DEBUG [b3ecdc60] Finished in 1.472 seconds with exit status 1 (failed).
+  INFO [b569e204] Running ~/.rvm-alma8/bin/rvm gsas_sync_staging do bundle install --jobs 4 --quiet as ldpdserv@diglib-service-prod1.cul.columbia.edu
+ DEBUG [b569e204] Command: cd /tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703220145 && ~/.rvm-alma8/bin/rvm gsas_sync_staging do bundle install --jobs 4 --quiet
+  INFO [b569e204] Finished in 2.836 seconds with exit status 0 (successful).
+ DEBUG [199e1dcf] Running if test ! -d /tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703220145; then echo "Directory does not exist '/tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703220145'" 1>&2; false; fi as ldpdserv@diglib-service-prod1.cul.columbia.edu
+ DEBUG [199e1dcf] Command: if test ! -d /tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703220145; then echo "Directory does not exist '/tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703220145'" 1>&2; false; fi
+ DEBUG [199e1dcf] Finished in 0.254 seconds with exit status 0 (successful).
+  INFO [382a175a] Running ~/.rvm-alma8/bin/rvm gsas_sync_staging do bundle exec whenever --update-crontab gsas_sync_staging --set environment=staging --roles=app  as ldpdserv@diglib-service-prod1.cul.columbia.edu
+ DEBUG [382a175a] Command: cd /tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703220145 && ( export RAILS_ENV="staging" ; ~/.rvm-alma8/bin/rvm gsas_sync_staging do bundle exec whenever --update-crontab gsas_sync_staging --set environment=staging --roles=app  )
+ DEBUG [382a175a] 	[write] crontab file updated
+  INFO [382a175a] Finished in 1.761 seconds with exit status 0 (successful).
+  INFO [0eaa2847] Running /usr/bin/env ln -s /tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703220145 /tmp/gsas_deployment_testing/gsas_sync_staging/releases/current as ldpdserv@diglib-service-prod1.cul.columbia.edu
+ DEBUG [0eaa2847] Command: /usr/bin/env ln -s /tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703220145 /tmp/gsas_deployment_testing/gsas_sync_staging/releases/current
+  INFO [0eaa2847] Finished in 0.225 seconds with exit status 0 (successful).
+  INFO [d01adb84] Running /usr/bin/env mv /tmp/gsas_deployment_testing/gsas_sync_staging/releases/current /tmp/gsas_deployment_testing/gsas_sync_staging as ldpdserv@diglib-service-prod1.cul.columbia.edu
+ DEBUG [d01adb84] Command: /usr/bin/env mv /tmp/gsas_deployment_testing/gsas_sync_staging/releases/current /tmp/gsas_deployment_testing/gsas_sync_staging
+  INFO [d01adb84] Finished in 0.224 seconds with exit status 0 (successful).
+ DEBUG [2a55154b] Running /usr/bin/env ls -x /tmp/gsas_deployment_testing/gsas_sync_staging/releases as ldpdserv@diglib-service-prod1.cul.columbia.edu
+ DEBUG [2a55154b] Command: /usr/bin/env ls -x /tmp/gsas_deployment_testing/gsas_sync_staging/releases
+ DEBUG [2a55154b] 	20250703212405	20250703212624	20250703212714	20250703212920	20250703213552
+20250703214135	20250703214210	20250703214414	20250703214454	20250703215120
+20250703215358	20250703215526	20250703215719	20250703215832	20250703215909
+20250703220014	20250703220145
+ DEBUG [2a55154b] Finished in 0.242 seconds with exit status 0 (successful).
+  INFO Keeping 5 of 17 deployed releases on diglib-service-prod1.cul.columbia.edu
+ DEBUG [557ecd04] Running [ -d /tmp/gsas_deployment_testing/gsas_sync_staging/current ] as ldpdserv@diglib-service-prod1.cul.columbia.edu
+ DEBUG [557ecd04] Command: [ -d /tmp/gsas_deployment_testing/gsas_sync_staging/current ]
+ DEBUG [557ecd04] Finished in 0.225 seconds with exit status 0 (successful).
+ DEBUG [b558c602] Running /usr/bin/env readlink /tmp/gsas_deployment_testing/gsas_sync_staging/current as ldpdserv@diglib-service-prod1.cul.columbia.edu
+ DEBUG [b558c602] Command: /usr/bin/env readlink /tmp/gsas_deployment_testing/gsas_sync_staging/current
+ DEBUG [b558c602] 	/tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703220145
+ DEBUG [b558c602] Finished in 0.222 seconds with exit status 0 (successful).
+  INFO [b67b5cc3] Running /usr/bin/env rm -rf /tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703212405 /tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703212624 /tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703212714 /tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703212920 /tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703213552 /tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703214135 /tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703214210 /tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703214414 /tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703214454 /tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703215120 /tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703215358 /tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703215526 as ldpdserv@diglib-service-prod1.cul.columbia.edu
+ DEBUG [b67b5cc3] Command: /usr/bin/env rm -rf /tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703212405 /tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703212624 /tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703212714 /tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703212920 /tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703213552 /tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703214135 /tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703214210 /tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703214414 /tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703214454 /tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703215120 /tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703215358 /tmp/gsas_deployment_testing/gsas_sync_staging/releases/20250703215526
+  INFO [b67b5cc3] Finished in 0.242 seconds with exit status 0 (successful).
+ DEBUG [5013f760] Running if test ! -d /tmp/gsas_deployment_testing/gsas_sync_staging/releases; then echo "Directory does not exist '/tmp/gsas_deployment_testing/gsas_sync_staging/releases'" 1>&2; false; fi as ldpdserv@diglib-service-prod1.cul.columbia.edu
+ DEBUG [5013f760] Command: if test ! -d /tmp/gsas_deployment_testing/gsas_sync_staging/releases; then echo "Directory does not exist '/tmp/gsas_deployment_testing/gsas_sync_staging/releases'" 1>&2; false; fi
+ DEBUG [5013f760] Finished in 0.219 seconds with exit status 0 (successful).
+  INFO [351595ee] Running /usr/bin/env echo "Branch LDPD-451 (at 4078327a508732472d639bc1728698e986b3366f) deployed as release 20250703220145 by bg2918" >> /tmp/gsas_deployment_testing/gsas_sync_staging/revisions.log as ldpdserv@diglib-service-prod1.cul.columbia.edu
+ DEBUG [351595ee] Command: cd /tmp/gsas_deployment_testing/gsas_sync_staging/releases && /usr/bin/env echo "Branch LDPD-451 (at 4078327a508732472d639bc1728698e986b3366f) deployed as release 20250703220145 by bg2918" >> /tmp/gsas_deployment_testing/gsas_sync_staging/revisions.log
+  INFO [351595ee] Finished in 0.225 seconds with exit status 0 (successful).
+  INFO ---------------------------------------------------------------------------
+  INFO START 2025-07-03 18:03:34 -0400 cap staging deploy
+  INFO ---------------------------------------------------------------------------
+  INFO [72ae0cd3] Running /usr/bin/env mkdir -p /tmp as ldpdserv@diglib-service-prod1.cul.columbia.edu
+ DEBUG [72ae0cd3] Command: /usr/bin/env mkdir -p /tmp
+  INFO [72ae0cd3] Finished in 0.762 seconds with exit status 0 (successful).
+ DEBUG Uploading /tmp/git-ssh-31cd2a91a231074b4958.sh 0.0%
+  INFO Uploading /tmp/git-ssh-31cd2a91a231074b4958.sh 100.0%
+  INFO [c5307862] Running /usr/bin/env chmod 700 /tmp/git-ssh-31cd2a91a231074b4958.sh as ldpdserv@diglib-service-prod1.cul.columbia.edu
+ DEBUG [c5307862] Command: /usr/bin/env chmod 700 /tmp/git-ssh-31cd2a91a231074b4958.sh
+  INFO [c5307862] Finished in 0.301 seconds with exit status 0 (successful).
+  INFO [592040d8] Running /usr/bin/env git ls-remote git@github.com:cul/gsas_sync.git/ HEAD as ldpdserv@diglib-service-prod1.cul.columbia.edu
+ DEBUG [592040d8] Command: ( export GIT_ASKPASS="/bin/echo" GIT_SSH="/tmp/git-ssh-31cd2a91a231074b4958.sh" ; /usr/bin/env git ls-remote git@github.com:cul/gsas_sync.git/ HEAD )
+ DEBUG [592040d8] 	4078327a508732472d639bc1728698e986b3366f	HEAD
+  INFO [592040d8] Finished in 1.248 seconds with exit status 0 (successful).
+  INFO [1b761fbf] Running /usr/bin/env mkdir -p /tmp/gsas_deployment_testing/gsas_sync_staging/shared /tmp/gsas_deployment_testing/gsas_sync_staging/releases as ldpdserv@diglib-service-prod1.cul.columbia.edu
+ DEBUG [1b761fbf] Command: /usr/bin/env mkdir -p /tmp/gsas_deployment_testing/gsas_sync_staging/shared /tmp/gsas_deployment_testing/gsas_sync_staging/releases
+  INFO [1b761fbf] Finished in 0.276 seconds with exit status 0 (successful).
+  INFO [f8faf138] Running /usr/bin/env mkdir -p /tmp/gsas_deployment_testing/gsas_sync_staging/shared/.bundle as ldpdserv@diglib-service-prod1.cul.columbia.edu
+ DEBUG [f8faf138] Command: /usr/bin/env mkdir -p /tmp/gsas_deployment_testing/gsas_sync_staging/shared/.bundle
+  INFO [f8faf138] Finished in 0.287 seconds with exit status 0 (successful).
+  INFO [f16d21ef] Running /usr/bin/env mkdir -p /tmp/gsas_deployment_testing/gsas_sync_staging/shared/config as ldpdserv@diglib-service-prod1.cul.columbia.edu
+ DEBUG [f16d21ef] Command: /usr/bin/env mkdir -p /tmp/gsas_deployment_testing/gsas_sync_staging/shared/config
+  INFO [f16d21ef] Finished in 0.267 seconds with exit status 0 (successful).
+ DEBUG [da35ad65] Running [ -f /tmp/gsas_deployment_testing/gsas_sync_staging/shared/config/config.yml ] as ldpdserv@diglib-service-prod1.cul.columbia.edu
+ DEBUG [da35ad65] Command: [ -f /tmp/gsas_deployment_testing/gsas_sync_staging/shared/config/config.yml ]
+ DEBUG [da35ad65] Finished in 0.293 seconds with exit status 0 (successful).
+ DEBUG [9ccd172d] Running [ -f /tmp/gsas_deployment_testing/gsas_sync_staging/current/REVISION ] as ldpdserv@diglib-service-prod1.cul.columbia.edu
+ DEBUG [9ccd172d] Command: [ -f /tmp/gsas_deployment_testing/gsas_sync_staging/current/REVISION ]
+ DEBUG [9ccd172d] Finished in 0.274 seconds with exit status 0 (successful).
+ DEBUG [edc1cf46] Running /usr/bin/env cat /tmp/gsas_deployment_testing/gsas_sync_staging/current/REVISION 2>/dev/null as ldpdserv@diglib-service-prod1.cul.columbia.edu
+ DEBUG [edc1cf46] Command: /usr/bin/env cat /tmp/gsas_deployment_testing/gsas_sync_staging/current/REVISION 2>/dev/null
+ DEBUG [edc1cf46] 	4078327a508732472d639bc1728698e986b3366f
+ DEBUG [edc1cf46] Finished in 0.302 seconds with exit status 0 (successful).
+ DEBUG [df522749] Running [ -f /tmp/gsas_deployment_testing/gsas_sync_staging/current/REVISION_TIME ] as ldpdserv@diglib-service-prod1.cul.columbia.edu
+ DEBUG [df522749] Command: [ -f /tmp/gsas_deployment_testing/gsas_sync_staging/current/REVISION_TIME ]
+ DEBUG [df522749] Finished in 0.297 seconds with exit status 0 (successful).
+ DEBUG [9cc45a99] Running /usr/bin/env cat /tmp/gsas_deployment_testing/gsas_sync_staging/current/REVISION_TIME 2>/dev/null as ldpdserv@diglib-service-prod1.cul.columbia.edu
+ DEBUG [9cc45a99] Command: /usr/bin/env cat /tmp/gsas_deployment_testing/gsas_sync_staging/current/REVISION_TIME 2>/dev/null
