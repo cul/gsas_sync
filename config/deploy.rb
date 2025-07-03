@@ -22,6 +22,8 @@ set :branch, 'LDPD-451' # TODO: use main when actually deploying
 # TODO : change to /opt/scripts/ when it is time for real deploy =)
 set :deploy_to, -> { "/tmp/gsas_deployment_testing/#{fetch(:deploy_name)}" } # Override this for each environment
 
+set :whenever_identifier, -> { "#{fetch(:application)}_#{fetch(:stage)}" }
+
 # Default value for :format is :airbrussh.
 # set :format, :airbrussh
 
