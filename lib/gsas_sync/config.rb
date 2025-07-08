@@ -15,8 +15,15 @@ class GsasSync
       def validate_config
         err_t = GsasSync::Exceptions::GsasError
         raise err_t, 'No config file provided.' unless File.exist? CONFIG_LOCATION
-        raise err_t, 'Storage directory in config file does not exist.' unless File.exist? storage_directory
-        raise err_t, 'The logs directory in config file does not exist.' unless File.exist? logs_directory
+
+        unless File.exist? storage_directory
+          raise err_t,
+                "Storage directory '#{storage_directory}' in config file does not exist."
+        end
+        return if File.exist? logs_directory
+
+        raise err_t,
+              "The logs directory '#{logs_directory}'in config file does not exist."
       end
 
       def sftp_server

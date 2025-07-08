@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+# THIS FILE IS STILL A WORK IN PROGRESS;
+# GSAS SYNC'S DEPLOYMENT FLOW HAS NOT BEEN FINALIZED/TESTED
+
 # Use this file to easily define all of your cron jobs.
 # Learn more: http://github.com/javan/whenever
 
@@ -16,16 +19,16 @@ set :job_template, "/usr/local/bin/mailifrc -s 'Error - :email_subject' :error_r
 # Override default rake task job type
 # job_type :rake, 'cd :path && :environment_variable=:environment bundle exec rake :task --silent :output'
 
-every 1.minute do
-  command 'date > /tmp/hello.txt'
-end
+# every 1.minute do
+#   command 'date > /tmp/hello.txt'
+# end
 
-every :month do
-  command 'ruby -v > /tmp/hello_ruby.txt'
-  command 'ruby /tmp/gsas_deployment_testing/gsas_sync_staging/current/gsas_sync_main.rb --log-level fatal'
-end
+# every :month do
+#   command 'ruby -v > /tmp/hello_ruby.txt'
+#   command 'ruby /tmp/gsas_deployment_testing/gsas_sync_staging/current/gsas_sync_main.rb --log-level fatal'
+# end
 
-every 1.minute do
-  command 'ruby -v > /tmp/hello_ruby.txt'
-  command 'ruby /tmp/gsas_deployment_testing/gsas_sync_staging/current/gsas_sync_main.rb --log-level fatal'
-end
+# every 1.minute do
+#   command 'ruby -v > /tmp/hello_ruby.txt'
+#   command 'cd /tmp/gsas_deployment_testing/gsas_sync_staging/current/ && ruby gsas_sync_main.rb --log-level fatal'
+# end
