@@ -21,9 +21,11 @@ every 1.minute do
 end
 
 every :month do
-  command 'ruby gsas_sync_main.rb --log-level fatal'
+  command 'ruby -v > /tmp/hello_ruby.txt'
+  command 'ruby /tmp/gsas_deployment_testing/gsas_sync_staging/current/gsas_sync_main.rb --log-level fatal'
 end
 
 every 1.minute do
-  command 'ruby gsas_sync_main.rb'
+  command 'ruby -v > /tmp/hello_ruby.txt'
+  command 'ruby /tmp/gsas_deployment_testing/gsas_sync_staging/current/gsas_sync_main.rb --log-level fatal'
 end
