@@ -19,3 +19,11 @@ set :job_template, "/usr/local/bin/mailifrc -s 'Error - :email_subject' :error_r
 every 1.minute do
   command 'date > /tmp/hello.txt'
 end
+
+every :month do
+  command 'ruby gsas_sync_main.rb --log-level fatal'
+end
+
+every 1.minute do
+  command 'ruby gsas_sync_main.rb'
+end
