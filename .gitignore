@@ -11,6 +11,7 @@
 
 config/config*
 temp
+log
 logs
 我能.我能
 dissertations*

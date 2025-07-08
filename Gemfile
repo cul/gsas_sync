@@ -27,5 +27,6 @@ gem 'time', '~> 0.4.1'
 gem 'capistrano', require: false
 gem 'capistrano-bundler', '~> 2.0'
 gem 'capistrano-cul', require: false
+gem 'capistrano-linked-files', '~> 1.2'
 
 gem 'whenever', require: false

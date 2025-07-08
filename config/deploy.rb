@@ -22,9 +22,13 @@ set :branch, 'LDPD-451' # TODO: use main when actually deploying
 # TODO : change to /opt/scripts/ when it is time for real deploy =)
 set :deploy_to, -> { "/tmp/gsas_deployment_testing/#{fetch(:deploy_name)}" } # Override this for each environment
 
+# Tag edits to the cron file - these will be overwritten each new deployment
 set :whenever_identifier, -> { "#{fetch(:application)}_#{fetch(:stage)}" }
 # set :whenever_command, 'bundle exec whenever'
 set :whenever_roles, %w[app]
+
+# Configure location where capistrano.log will be written
+set :format_options, log_file: 'logs/capistrano.log'
 
 # Default value for :format is :airbrussh.
 # set :format, :airbrussh
@@ -50,6 +54,11 @@ set :rvm_ruby_version, fetch(:deploy_name) # This RVM alias must exist on the se
   SSHKit.config.command_map.prefix[command_to_prefix].push(
     "#{fetch(:rvm_custom_path, '~/.rvm')}/bin/rvm #{fetch(:rvm_ruby_version)} do"
   )
+end
+
+# copy linked_files
+namespace :deploy do
+  before :check, 'linked_files:upload_files'
 end
 
 # Default value for default_env is {}

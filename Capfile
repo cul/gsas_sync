@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Load DSL and set up stages
 require 'capistrano/setup'
 
@@ -6,6 +8,7 @@ require 'capistrano/deploy'
 require 'capistrano/bundler' # include bundle install task
 require 'capistrano/cul'
 require 'whenever/capistrano' # include whenever tasks
+require 'capistrano/linked_files'
 
 # Load the SCM plugin appropriate to your project:
 #
