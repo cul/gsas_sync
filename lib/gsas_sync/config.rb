@@ -14,7 +14,7 @@ class GsasSync
       # Validates that the config file exists, and the listed storage and logs directories exist as well
       def validate_config
         err_t = GsasSync::Exceptions::GsasError
-        raise err_t, 'No config file provided.' unless File.exist? CONFIG_LOCATION
+        raise err_t, "No config file provided at '#{CONFIG_LOCATION}'" unless File.exist? CONFIG_LOCATION
 
         unless File.exist? storage_directory
           raise err_t,
