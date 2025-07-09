@@ -10,7 +10,7 @@
 # server "db.example.com", user: "deploy", roles: %w{db}
 
 set :stage, :staging
-set :branch, 'LDPD-451'
+set :branch, 'deployment'
 server 'diglib-service-prod1.cul.columbia.edu', user: fetch(:remote_user), roles: %w[app]
 
 # role-based syntax
