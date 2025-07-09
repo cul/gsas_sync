@@ -3,11 +3,6 @@
 # config valid for current version and patch releases of Capistrano
 lock '~> 3.19.2'
 
-# Until we retire all old CentOS VMs, we need to set the rvm_custom_path because rvm is installed
-# in a non-standard location for our AlmaLinux VMs.  This is because our service accounts need to
-# maintain two rvm installations for two different Linux OS versions.
-set :rvm_custom_path, '~/.rvm-alma8' # default ~/.rvm
-
 set :application, 'gsas_sync'
 set :repo_name, fetch(:application)
 set :repo_url, "git@github.com:cul/#{fetch(:repo_name)}.git/"
@@ -16,7 +11,7 @@ set :remote_user, 'ldpdserv' # because we are accessing preservation storage (co
 # set :remote_user, 'ldpdserv' # because we are accessing preservation storage (confirm this is appropriate)
 
 # Default branch is :master
-set :branch, 'LDPD-451' # TODO: use main when actually deploying
+set :branch, 'deployment' # TODO: use main when actually deploying
 # ask :branch, `git rev-parse --abbrev-ref HEAD`.chomp
 
 # TODO : change to /opt/scripts/ when it is time for real deploy =)
@@ -48,6 +43,10 @@ append :linked_files, 'config/config.yml'
 # append :linked_dirs, "log", "tmp/pids", "tmp/cache", "tmp/sockets", "public/system", "vendor", "storage"
 append :linked_dirs, '.bundle'
 
+# Until we retire all old CentOS VMs, we need to set the rvm_custom_path because rvm is installed
+# in a non-standard location for our AlmaLinux VMs.  This is because our service accounts need to
+# maintain two rvm installations for two different Linux OS versions.
+set :rvm_custom_path, '~/.rvm-alma8' # default ~/.rvm
 # RVM Setup, for selecting the correct ruby version (instead of capistrano-rvm gem)
 set :rvm_ruby_version, fetch(:deploy_name) # This RVM alias must exist on the server
 [:rake, :gem, :bundle, :ruby].each do |command_to_prefix|
@@ -58,6 +57,14 @@ end
 
 # copy linked_files
 namespace :deploy do
+  desc 'Create deploy_to directory if it does not exist'
+  task :ensure_deploy_to_exists do
+    on roles(:all) do
+      execute :mkdir, '-p', fetch(:deploy_to)
+    end
+  end
+
+  before :starting, :ensure_deploy_to_exists
   before :check, 'linked_files:upload_files'
 end
 
