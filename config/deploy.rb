@@ -14,8 +14,7 @@ set :remote_user, 'ldpdserv' # because we are accessing preservation storage (co
 set :branch, 'deployment' # TODO: use main when actually deploying
 # ask :branch, `git rev-parse --abbrev-ref HEAD`.chomp
 
-# TODO : change to /opt/scripts/ when it is time for real deploy =)
-set :deploy_to, -> { "/tmp/gsas_deployment_testing/#{fetch(:deploy_name)}" } # Override this for each environment
+set :deploy_to, -> { "/opt/scripts/#{fetch(:deploy_name)}" }
 
 # Tag edits to the cron file - these will be overwritten each new deployment
 set :whenever_identifier, -> { "#{fetch(:application)}_#{fetch(:stage)}" }
@@ -56,17 +55,17 @@ set :rvm_ruby_version, fetch(:deploy_name) # This RVM alias must exist on the se
 end
 
 # copy linked_files
-namespace :deploy do
-  desc 'Create deploy_to directory if it does not exist'
-  task :ensure_deploy_to_exists do
-    on roles(:all) do
-      execute :mkdir, '-p', fetch(:deploy_to)
-    end
-  end
+# namespace :deploy do
+#   desc 'Create deploy_to directory if it does not exist'
+#   task :ensure_deploy_to_exists do
+#     on roles(:all) do
+#       execute :mkdir, '-p', fetch(:deploy_to)
+#     end
+#   end
 
-  before :starting, :ensure_deploy_to_exists
-  before :check, 'linked_files:upload_files'
-end
+#   before :starting, :ensure_deploy_to_exists
+#   before :check, 'linked_files:upload_files'
+# end
 
 # Default value for default_env is {}
 # set :default_env, { path: "/opt/ruby/bin:$PATH" }
