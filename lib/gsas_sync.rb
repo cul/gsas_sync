@@ -42,7 +42,7 @@ class GsasSync
     attempt_download
     GsasSync::Logger.progress('Successful transfer from remote host to local temporary directory')
   rescue StandardError => e
-    GsasSync::Logger.log_all_fatal("An error ocurred downloading files from the remote server. Error: #{e}. Exiting...")
+    GsasSync::Logger.log_all_fatal("An error occurred downloading files from the remote server. Error: #{e}. Exiting...")
     email_and_exit_failure
   end
 
@@ -182,7 +182,7 @@ class GsasSync
     @downloaded_dirs.each do |dir|
       GsasSync::Logger.progress_log_dir_contents("#{GsasSync::Config.storage_directory}/#{dir}#{temp}")
     end
-    GsasSync::Logger.progress('The transfered files have been deleted on the remote transfer server')
+    GsasSync::Logger.progress('The transferred files have been deleted on the remote transfer server')
     GsasSync::Logger.progress('vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv')
     GsasSync::Logger.progress('vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv')
   end
