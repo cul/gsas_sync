@@ -25,7 +25,7 @@ class Validator
   ALLOWED_ALGS = %w[sha256 md5].freeze # TODO: update this list of expected Checksum algorithms as needed
 
   # Allow the caller to determine exactly what did and did not pass
-  attr_reader :files_present, :no_bad_chars, :good_manifest, :chucksums
+  attr_reader :files_present, :no_bad_chars, :valid_manifest, :checksums
 
   # Params:
   #  - dissertations_directory: Pathname object representing a yyyy_mm_dissertations.temp directory
