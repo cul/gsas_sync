@@ -14,11 +14,11 @@ class GsasSync
     "again.\nThe files were not deleted on the remote transfer server."
 
     def initialize(log_file_name)
-      @server = GsasSync::Config.mail_server['host']
-      @port = GsasSync::Config.mail_server['port']
-      @sender = GsasSync::Config.mail_server['sender_address']
-      @recipients = GsasSync::Config.mail_server['recipients']
-      @log_file = "#{GsasSync::Config.logs_directory}/#{log_file_name}"
+      @server = Config.mail_server['host']
+      @port = Config.mail_server['port']
+      @sender = Config.mail_server['sender_address']
+      @recipients = Config.mail_server['recipients']
+      @log_file = "#{Config.logs_directory}/#{log_file_name}"
       init_mail_client
     end
 
@@ -47,15 +47,15 @@ class GsasSync
           add_file attachment
         end
       end
-      GsasSync::Logger.stdout_logger.debug log_message
+      Logger.stdout_logger.debug log_message
     end
 
     def make_and_send_email(success:)
       if success
-        send_email(subject: EmailClient::SUCCESS_SUBJECT, body: EmailClient::SUCCESS_BODY,
+        send_email(subject: SUCCESS_SUBJECT, body: SUCCESS_BODY,
                    log_message: 'Success email sent')
       else
-        send_email(subject: EmailClient::FAILURE_SUBJECT, body: EmailClient::FAILURE_BODY,
+        send_email(subject: FAILURE_SUBJECT, body: FAILURE_BODY,
                    log_message: 'Failure email sent')
       end
     end

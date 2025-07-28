@@ -274,7 +274,5 @@ class Validator
     else
       GsasSync::Logger.progress("-- ❌ Validation Failure: #{message} --")
     end
-    # TODO: consider returning valid here, then rename to log_validation_result_and_return_value
-    # con : this may make testing a little awkward; mock the method to have it return whatever was passed as first param
   end
 end

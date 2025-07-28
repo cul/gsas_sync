@@ -16,8 +16,8 @@ class GsasSync
 
   # rename the downloaded yyyy_mm_dissertations.temp directory by removing the '.temp' suffix
   def rename_temp_dirs
-    if GsasSync::Config.dry_run
-      GsasSync::Logger.log_all 'DRY RUN: Skipping renaming of temp directories; temp directories will be removed.'
+    if Config.dry_run
+      Logger.log_all 'DRY RUN: Skipping renaming of temp directories; temp directories will be removed.'
       return
     end
     @downloaded_dirs.each do |dir_name|
@@ -40,9 +40,9 @@ class GsasSync
   def download_files_to_temp_dir
     verify_dissertations_directory_exists
     attempt_download
-    GsasSync::Logger.progress('Successful transfer from remote host to local temporary directory')
+    Logger.progress('Successful transfer from remote host to local temporary directory')
   rescue StandardError => e
-    GsasSync::Logger.log_all_fatal("An error occurred downloading files from the remote server. Error: #{e}. Exiting...")
+    Logger.log_all_fatal("An error occurred downloading files from the remote server. Error: #{e}. Exiting...")
     email_and_exit(success: false) # TODO: move to outer scope
   end
 
@@ -51,7 +51,7 @@ class GsasSync
     @sftp_client = SftpClient.new
     @sftp_client.connect
     unless @sftp_client.uploads_dir?
-      raise GsasSync::Exceptions::SftpClientError, 'Remote transfer server does not have an uploads directory'
+      raise Exceptions::SftpClientError, 'Remote transfer server does not have an uploads directory'
     end
 
     if @sftp_client.dissertations_dir_already_exists?(@preservation_dir, @uploads_dir)
@@ -77,7 +77,7 @@ class GsasSync
   def validate_downloaded_files
     validators = init_validators
     if validators.empty?
-      raise GsasSync::Exceptions::ValidationError,
+      raise Exceptions::ValidationError,
             'Unable to locate dissertation directory on remote'
     end
 
@@ -87,10 +87,10 @@ class GsasSync
 
       valid = false
     end
-    GsasSync::Logger.log_all("Finished running validations for all downloaded files: #{valid ? 'SUCCESS ✅' : 'FAILURE ❌'}") # rubocop:disable Layout/LineLength
+    Logger.log_all("Finished running validations for all downloaded files: #{valid ? 'SUCCESS ✅' : 'FAILURE ❌'}")
     valid
   rescue StandardError => e
-    GsasSync::Logger.log_all_fatal("An unexpected fatal error occurred while validating the downloaded files: #{e}. Unable to proceed. Exiting...") # rubocop:disable Layout/LineLength
+    Logger.log_all_fatal("An unexpected fatal error occurred while validating the downloaded files: #{e}. Unable to proceed. Exiting...") # rubocop:disable Layout/LineLength
     email_and_exit(success: false) # TODO: move to outer scope
   end
 
@@ -105,8 +105,8 @@ class GsasSync
   end
 
   def rm_remote_files
-    if GsasSync::Config.dry_run
-      GsasSync::Logger.log_all 'DRY RUN: Skipping deletion of downloaded files from remote transfer server.'
+    if Config.dry_run
+      Logger.log_all 'DRY RUN: Skipping deletion of downloaded files from remote transfer server.'
       return
     end
     @sftp_client.connect
@@ -122,48 +122,48 @@ class GsasSync
   # An exception may occur sending mail
   def email_and_exit(success: true)
     result_str = success ? 'success' : 'failure'
-    if GsasSync::Config.dry_run
-      GsasSync::Logger.log_all("DRY RUN: Skipping #{result_str} email notification.")
+    if Config.dry_run
+      Logger.log_all("DRY RUN: Skipping #{result_str} email notification.")
       graceful_exit
     end
-    GsasSync::Logger.log_all_fatal("Sending #{result_str} email notification. This will close the progress.log file...")
-    GsasSync::Logger.close_progress_log_file
+    Logger.log_all_fatal("Sending #{result_str} email notification. This will close the progress.log file...")
+    Logger.close_progress_log_file
     rm_temp_dirs
     mail_client.make_and_send_email(success: success)
   rescue StandardError => e
-    GsasSync::Logger.stdout_logger.fatal("#{e.class} - #{e.message}")
-    GsasSync::Logger.progress_log_append("#{e.class} - #{e.message}")
+    Logger.stdout_logger.fatal("#{e.class} - #{e.message}")
+    Logger.progress_log_append("#{e.class} - #{e.message}")
   ensure
     graceful_exit
   end
 
   # Gracefully terminates the program, closing any open OS resources
   def graceful_exit
-    GsasSync::Logger.stdout_logger.info('Gracefully shutting down...')
+    Logger.stdout_logger.info('Gracefully shutting down...')
     @sftp_client.disconnect unless @sftp_client.nil? || @sftp_client.closed?
-    GsasSync::Logger.close_progress_log_file
+    Logger.close_progress_log_file
     exit
   end
 
   def log_summary
-    GsasSync::Logger.progress('^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^')
-    GsasSync::Logger.progress('^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^')
-    GsasSync::Logger.progress('Printing summary of what was downloaded from the remote transfer server:')
-    if GsasSync::Config.dry_run
-      GsasSync::Logger.progress('(This is a dry run and only temporary downloads were made. This is a summary of what was downloaded, validated, and then deleted.)') # rubocop:disable Layout/LineLength
+    Logger.progress('^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^')
+    Logger.progress('^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^')
+    Logger.progress('Printing summary of what was downloaded from the remote transfer server:')
+    if Config.dry_run
+      Logger.progress('(This is a dry run and only temporary downloads were made. This is a summary of what was downloaded, validated, and then deleted.)') # rubocop:disable Layout/LineLength
     end
-    temp = GsasSync::Config.dry_run ? '.temp' : ''
+    temp = Config.dry_run ? '.temp' : ''
     @downloaded_dirs.each do |dir|
-      GsasSync::Logger.progress_log_dir_contents("#{GsasSync::Config.storage_directory}/#{dir}#{temp}")
+      Logger.progress_log_dir_contents("#{Config.storage_directory}/#{dir}#{temp}")
     end
-    GsasSync::Logger.progress('The transferred files have been deleted on the remote transfer server')
-    GsasSync::Logger.progress('vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv')
-    GsasSync::Logger.progress('vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv')
+    Logger.progress('The transferred files have been deleted on the remote transfer server')
+    Logger.progress('vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv')
+    Logger.progress('vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv')
   end
 
   private
 
   def mail_client
-    @mail_client ||= EmailClient.new(GsasSync::Logger.log_file_name)
+    @mail_client ||= EmailClient.new(Logger.log_file_name)
   end
 end
