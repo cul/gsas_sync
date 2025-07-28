@@ -43,7 +43,7 @@ class GsasSync
     GsasSync::Logger.progress('Successful transfer from remote host to local temporary directory')
   rescue StandardError => e
     GsasSync::Logger.log_all_fatal("An error occurred downloading files from the remote server. Error: #{e}. Exiting...")
-    email_and_exit_failure
+    email_and_exit(success: false) # TODO: move to outer scope
   end
 
   # Side effect: sets the @downloaded_dirs array based on what was downloaded by the @sftp_client
@@ -76,7 +76,10 @@ class GsasSync
   # Create Validator objects for each yyyy_mm_dissertations directory and runs all validations, returning the result
   def validate_downloaded_files
     validators = init_validators
-    raise GsasSync::Exceptions::ValidationError, 'Unable to locate any dissertation directory' if validators.empty?
+    if validators.empty?
+      raise GsasSync::Exceptions::ValidationError,
+            'Unable to locate dissertation directory on remote'
+    end
 
     valid = true
     validators.each do |validator|
@@ -88,7 +91,7 @@ class GsasSync
     valid
   rescue StandardError => e
     GsasSync::Logger.log_all_fatal("An unexpected fatal error occurred while validating the downloaded files: #{e}. Unable to proceed. Exiting...") # rubocop:disable Layout/LineLength
-    email_and_exit_failure
+    email_and_exit(success: false) # TODO: move to outer scope
   end
 
   # Identify dissertation directories that were downloaded into the temporary location and create validator instances
@@ -116,51 +119,22 @@ class GsasSync
           "An error occurred trying to delete the transferred files on the remote server. Error: #{e}")
   end
 
-  def email_and_exit_failure
+  # An exception may occur sending mail
+  def email_and_exit(success: true)
+    result_str = success ? 'success' : 'failure'
     if GsasSync::Config.dry_run
-      GsasSync::Logger.log_all('DRY RUN: Skipping failure email notification.')
-    else
-      GsasSync::Logger.log_all_fatal('Sending failure email notification. This will close the progress.log file...')
-      send_failure_email
+      GsasSync::Logger.log_all("DRY RUN: Skipping #{result_str} email notification.")
+      graceful_exit
     end
-  rescue StandardError => e
-    GsasSync::Logger.stdout_logger.fatal("#{e.class} - #{e.message}")
-    GsasSync::Logger.progress_log_append("#{e.class} - #{e.message}")
-  ensure
-    graceful_exit
-  end
-
-  def send_failure_email
+    GsasSync::Logger.log_all_fatal("Sending #{result_str} email notification. This will close the progress.log file...")
     GsasSync::Logger.close_progress_log_file
     rm_temp_dirs
-    mail_client.send_failure_email_all
-  rescue StandardError => e
-    raise(GsasSync::Exceptions::EmailError,
-          "An error occurred while sending an email via SMTP. This is problematic as the email was an error notification, and it was unable to send. Please examine logs locally. Error: #{e}") # rubocop:disable Layout/LineLength
-  end
-
-  def email_and_exit_success
-    if GsasSync::Config.dry_run
-      GsasSync::Logger.log_all('DRY RUN: Skipping success email notification.')
-      rm_temp_dirs
-    else
-      send_success_email
-      GsasSync::Logger.stdout_logger.info('The Gsas Sync Process has completed successfully.')
-    end
+    mail_client.make_and_send_email(success: success)
   rescue StandardError => e
     GsasSync::Logger.stdout_logger.fatal("#{e.class} - #{e.message}")
     GsasSync::Logger.progress_log_append("#{e.class} - #{e.message}")
   ensure
     graceful_exit
-  end
-
-  def send_success_email
-    GsasSync::Logger.log_all('Closing progress log file in order to send email...')
-    GsasSync::Logger.close_progress_log_file
-    mail_client.send_success_email_all
-  rescue StandardError => e
-    raise(GsasSync::Exceptions::EmailError,
-          "An error occurred while sending an email via SMTP. This email was a notification that the process succeeded. This failure will be logged and the program will terminate. Error: #{e}") # rubocop:disable Layout/LineLength
   end
 
   # Gracefully terminates the program, closing any open OS resources

@@ -35,43 +35,29 @@ class GsasSync
       "#{FileUtils.pwd}/#{@log_file}"
     end
 
-    def send_success_email_all
-      GsasSync::Logger.stdout_logger.debug('GsasSync::EmailClient#send_success_email_all: Entry')
-      subject = SUCCESS_SUBJECT
-      body = SUCCESS_BODY
-      @recipients.each { |email| send_success_email(email, subject, body) }
-    end
-
-    def send_success_email(recipient, subject, body)
+    def send_email(subject:, body:, log_message:)
       attachment = log_file_str
       sender = @sender
-      Mail.deliver do
-        from sender
-        to recipient
-        subject subject
-        body body
-        add_file attachment
+      @recipients.each do |recipient|
+        Mail.deliver do
+          from sender
+          to recipient
+          subject subject
+          body body
+          add_file attachment
+        end
       end
-      GsasSync::Logger.stdout_logger.debug('Success email sent')
+      GsasSync::Logger.stdout_logger.debug log_message
     end
 
-    def send_failure_email_all
-      subject = FAILURE_SUBJECT
-      body = FAILURE_BODY
-      @recipients.each { |email| send_failure_email(email, subject, body) }
-    end
-
-    def send_failure_email(recipient, subject, body)
-      attachment = log_file_str
-      sender = @sender # lexical scope needed for Mail.deliver block; use local variables
-      Mail.deliver do
-        from sender
-        to recipient
-        subject subject
-        body body
-        add_file attachment
+    def make_and_send_email(success:)
+      if success
+        send_email(subject: EmailClient::SUCCESS_SUBJECT, body: EmailClient::SUCCESS_BODY,
+                   log_message: 'Success email sent')
+      else
+        send_email(subject: EmailClient::FAILURE_SUBJECT, body: EmailClient::FAILURE_BODY,
+                   log_message: 'Failure email sent')
       end
-      GsasSync::Logger.stdout_logger.debug('Failure email sent')
     end
   end
 end
