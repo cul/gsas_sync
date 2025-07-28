@@ -30,9 +30,6 @@ class GsasSync
     @downloaded_dirs.each do |dir|
       FileUtils.rm_rf("#{@preservation_dir}/#{dir}.temp") if File.directory?("#{@preservation_dir}/#{dir}.temp")
     end
-  rescue StandardError => e
-    raise(Exceptions::GsasError,
-          "An error occurred removing the temporary download directory on the local server. Error: #{e}")
   end
 
   # Attempts to download files from the remote server to a temporary directory using the SFTP client
@@ -41,9 +38,6 @@ class GsasSync
     verify_dissertations_directory_exists
     attempt_download
     Logger.progress('Successful transfer from remote host to local temporary directory')
-  rescue StandardError => e
-    Logger.log_all_fatal("An error occurred downloading files from the remote server. Error: #{e}. Exiting...")
-    email_and_exit(success: false) # TODO: move to outer scope
   end
 
   # Side effect: sets the @downloaded_dirs array based on what was downloaded by the @sftp_client
@@ -89,9 +83,6 @@ class GsasSync
     end
     Logger.log_all("Finished running validations for all downloaded files: #{valid ? 'SUCCESS ✅' : 'FAILURE ❌'}")
     valid
-  rescue StandardError => e
-    Logger.log_all_fatal("An unexpected fatal error occurred while validating the downloaded files: #{e}. Unable to proceed. Exiting...") # rubocop:disable Layout/LineLength
-    email_and_exit(success: false) # TODO: move to outer scope
   end
 
   # Identify dissertation directories that were downloaded into the temporary location and create validator instances
@@ -114,9 +105,6 @@ class GsasSync
       @sftp_client.rm_recursive("#{@uploads_dir}/#{dir_name}")
     end
     @sftp_client.disconnect
-  rescue StandardError => e
-    raise(Exceptions::SftpClientError,
-          "An error occurred trying to delete the transferred files on the remote server. Error: #{e}")
   end
 
   # An exception may occur sending mail
@@ -126,11 +114,12 @@ class GsasSync
       Logger.log_all("DRY RUN: Skipping #{result_str} email notification.")
       graceful_exit
     end
-    Logger.log_all_fatal("Sending #{result_str} email notification. This will close the progress.log file...")
+    puts 'shouldnt be here'
+    Logger.log_all("Sending #{result_str} email notification. This will close the progress.log file...")
     Logger.close_progress_log_file
     rm_temp_dirs
     mail_client.make_and_send_email(success: success)
-  rescue StandardError => e
+  rescue StandardError => e # TODO: catch in outer scope
     Logger.stdout_logger.fatal("#{e.class} - #{e.message}")
     Logger.progress_log_append("#{e.class} - #{e.message}")
   ensure
@@ -139,6 +128,7 @@ class GsasSync
 
   # Gracefully terminates the program, closing any open OS resources
   def graceful_exit
+    puts 'inside graceful exit.........'
     Logger.stdout_logger.info('Gracefully shutting down...')
     @sftp_client.disconnect unless @sftp_client.nil? || @sftp_client.closed?
     Logger.close_progress_log_file

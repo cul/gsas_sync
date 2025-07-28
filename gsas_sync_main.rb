@@ -39,10 +39,20 @@ server_name = GsasSync::Config.sftp_server_str
 
 GsasSync::Logger.begin_step('Download files from remote',
                             "Downloading files from the remote transfer (sftp) server #{server_name}")
-gsas_sync.download_files_to_temp_dir
+begin
+  gsas_sync.download_files_to_temp_dir
+rescue StandardError => e
+  GsasSync::Logger.log_all_fatal("An error occurred downloading files from the remote server. Error: #{e}. Exiting...")
+  gsas_sync.email_and_exit(success: false)
+end
 
 GsasSync::Logger.begin_step 'Validating downloaded files'
-valid = gsas_sync.validate_downloaded_files
+begin
+  valid = gsas_sync.validate_downloaded_files
+rescue StandardError => e
+  GsasSync::Logger.log_all_fatal("An unexpected fatal error occurred while validating the downloaded files: #{e}. Unable to proceed. Exiting...") # rubocop:disable Layout/LineLength
+  gsas_sync.email_and_exit(success: false)
+end
 
 unless valid
   GsasSync::Logger.log_all_fatal 'One or more validation tests failed. The process will send a failure email and exit.'
@@ -54,7 +64,8 @@ begin
   gsas_sync.rename_temp_dirs
 rescue StandardError => e
   GsasSync::Logger.log_all_error(
-    'An error occurred while trying to move the downloaded files. The script will terminate...', e
+    'An error occurred moving the downloaded directory on the local server from temporary to preservation location.'\
+    ' The script will terminate...', e
   )
   gsas_sync.email_and_exit(success: false)
 end
@@ -64,7 +75,8 @@ begin
   gsas_sync.rm_remote_files
 rescue StandardError => e
   GsasSync::Logger.log_all_error(
-    'An error occurred while trying to delete them from the remote transfer server. The script will terminate...', e
+    'An error occurred while trying to delete the transferred files on the remote transfer server.'\
+    ' The script will terminate...', e
   )
   gsas_sync.email_and_exit(success: false)
 end

@@ -64,8 +64,6 @@ class SftpClient
     @dissertation_dirs.each do |dir_name|
       dl_recursive("#{remote_uploads_dir}/#{dir_name}", "#{local_dissertations_dir}/#{dir_name}.temp")
     end
-  rescue StandardError => e
-    raise e
   end
 
   # The @dissertation_dirs instance variable is set by SftpClient#dl_dissertation_dirs_to_temp
@@ -109,23 +107,21 @@ class SftpClient
 
   # rm_recursive uses an open @sftp_session
   # Recursively delete all the contents of the given directory, and then the directory itself
-  def rm_recursive(directory) # rubocop:disable Metrics/AbcSize,Metrics/CyclomaticComplexity
+  def rm_recursive(directory) # rubocop:disable Metrics/AbcSize
     GsasSync::Logger.log_all "Removing the #{directory} directory on the remote server..."
     # First, delete all files
     sftp_session.dir.glob(directory, '**/*').each do |entry|
       next unless entry.file?
 
-      sftp_session.remove!("#{directory}/#{entry.name}") # TODO: uncomment when ready
+      sftp_session.remove!("#{directory}/#{entry.name}")
     end
     # Second, delete all directories (For why, see documentation for #rmdir and #rmdir! : https://net-ssh.github.io/net-sftp/)
     sftp_session.dir.glob(directory, '**/*').sort_by { |path| -1 * path.name.split('/').length }.each do |entry|
       next if ['.', '..'].include?(entry.name) || entry.file?
 
-      sftp_session.rmdir!("#{directory}/#{entry.name}") # TODO: uncomment when ready
+      sftp_session.rmdir!("#{directory}/#{entry.name}")
     end
     sftp_session.rmdir!(directory)
-  rescue StandardError => e
-    raise e
   end
 
   def uploads_dir?
