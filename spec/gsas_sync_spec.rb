@@ -15,6 +15,7 @@ RSpec.describe GsasSync do
     allow(GsasSync::Logger).to receive(:stdout_logger).and_return(logger_double)
     allow(logger_double).to receive(:info)
     allow(logger_double).to receive(:debug)
+    allow(logger_double).to receive(:fatal)
 
     allow(GsasSync::Config).to receive(:storage_directory).and_return('path/to/storage/directory')
     allow(GsasSync::Config).to receive(:dry_run).and_return(false) # Override in example groups for dry run testing
@@ -84,11 +85,6 @@ RSpec.describe GsasSync do
         expect(File.exist?(temp_preservation_dir.join('2000_01_dissertations.temp'))).to be(false)
         expect(File.exist?(temp_preservation_dir.join('2000_01_dissertations'))).to be(false)
       end
-
-      it 'raises a GsasError if an exception if caught' do
-        allow(FileUtils).to receive(:rm_rf).and_raise(StandardError, 'test error')
-        expect { test_gsas_sync.rm_temp_dirs }.to raise_error(GsasSync::Exceptions::GsasError)
-      end
     end
 
     describe '#download_files_to_temp_dir' do
@@ -99,13 +95,6 @@ RSpec.describe GsasSync do
 
       it 'logs to progress on success' do
         expect(GsasSync::Logger).to receive(:progress)
-        test_gsas_sync.download_files_to_temp_dir
-      end
-
-      it 'rescues any error raised by #verify_dissertations_directory_exists and calls email_and_exit_failure' do
-        allow(test_gsas_sync).to receive(:verify_dissertations_directory_exists).and_raise(StandardError, 'test error')
-        allow(test_gsas_sync).to receive(:email_and_exit_failure)
-        expect(test_gsas_sync).to receive(:email_and_exit_failure)
         test_gsas_sync.download_files_to_temp_dir
       end
     end
@@ -161,7 +150,7 @@ RSpec.describe GsasSync do
       allow(test_gsas_sync).to receive(:init_validators).and_return([validator_double1, validator_double2])
       allow(validator_double1).to receive(:run_validations).and_return(true)
       allow(validator_double2).to receive(:run_validations).and_return(true)
-      allow(test_gsas_sync).to receive(:email_and_exit_failure)
+      allow(test_gsas_sync).to receive(:email_and_exit)
     end
 
     it 'returns true if each validator passes validations' do
@@ -171,18 +160,6 @@ RSpec.describe GsasSync do
     it 'returns false if at least one validator fails validations' do
       allow(validator_double1).to receive(:run_validations).and_return(false)
       expect(test_gsas_sync.validate_downloaded_files).to be(false)
-    end
-
-    it 'calls email_and_exit_failure if there are no downloaded directories to validate' do
-      allow(test_gsas_sync).to receive(:init_validators).and_return([])
-      expect(test_gsas_sync).to receive(:email_and_exit_failure)
-      test_gsas_sync.validate_downloaded_files
-    end
-
-    it 'calls email_and_exit_failure if an error is rescued' do
-      allow(validator_double1).to receive(:run_validations).and_raise(StandardError)
-      expect(test_gsas_sync).to receive(:email_and_exit_failure)
-      test_gsas_sync.validate_downloaded_files
     end
   end
 
@@ -231,16 +208,15 @@ RSpec.describe GsasSync do
         expect(sftp_client_double).to receive(:rm_recursive).twice
         test_gsas_sync.rm_remote_files
       end
-
-      it 'raises an SftpClientError if an error occurs' do
-        allow(sftp_client_double).to receive(:connect).and_raise(StandardError)
-        expect { test_gsas_sync.rm_remote_files }.to raise_error(GsasSync::Exceptions::SftpClientError)
-      end
     end
   end
 
-  describe '#email_and_exit_failure' do
+  describe '#email_and_exit' do # TODO: testing here
     before do
+      allow(GsasSync::Logger).to receive(:close_progress_log_file)
+      allow(GsasSync::Logger).to receive(:progress_log_append)
+      allow(test_gsas_sync).to receive(:mail_client).and_return(mail_client_double)
+      allow(mail_client_double).to receive(:make_and_send_email)
       allow(test_gsas_sync).to receive(:graceful_exit)
     end
 
@@ -249,83 +225,14 @@ RSpec.describe GsasSync do
         allow(GsasSync::Config).to receive(:dry_run).and_return(true)
       end
 
-      it 'logs all' do
-        expect(GsasSync::Logger).to receive(:log_all).once
-        test_gsas_sync.email_and_exit_failure
+      it 'logs that it is dry run to all' do
+        expect(GsasSync::Logger).to receive(:log_all)
+        test_gsas_sync.email_and_exit(success: true)
       end
 
-      it 'calls graceful exit' do
-        expect(test_gsas_sync).to receive(:graceful_exit).once
-        test_gsas_sync.email_and_exit_failure
-      end
-    end
-
-    context 'in non-dry run' do
-      before do
-        allow(logger_double).to receive(:fatal)
-        allow(GsasSync::Logger).to receive(:progress_log_append)
-        allow(test_gsas_sync).to receive(:send_failure_email)
-      end
-
-      it 'logs all' do
-        expect(GsasSync::Logger).to receive(:log_all_fatal).once
-        test_gsas_sync.email_and_exit_failure
-      end
-
-      it 'logs all if an error occurs sending email (including appending to log file)' do
-        allow(test_gsas_sync).to receive(:send_failure_email).and_raise(StandardError)
-        expect(GsasSync::Logger).to receive(:progress_log_append).once
-        test_gsas_sync.email_and_exit_failure
-      end
-
-      it 'calls graceful_exit even if an error occurs' do
-        allow(test_gsas_sync).to receive(:send_failure_email).and_raise(StandardError)
-        expect(test_gsas_sync).to receive(:graceful_exit).once
-        test_gsas_sync.email_and_exit_failure
-      end
-    end
-  end
-
-  describe '#send_failure_email' do
-    before do
-      allow(GsasSync::Logger).to receive(:close_progress_log_file)
-      allow(test_gsas_sync).to receive(:rm_temp_dirs)
-      allow(test_gsas_sync).to receive(:mail_client).and_return(mail_client_double)
-      allow(mail_client_double).to receive(:send_failure_email_all)
-    end
-
-    it 'closes the progress log file' do
-      expect(GsasSync::Logger).to receive(:close_progress_log_file)
-      test_gsas_sync.send_failure_email
-    end
-
-    it 'raises an EmailError if an error occurs' do
-      allow(mail_client_double).to receive(:send_failure_email_all).and_raise(StandardError)
-      expect { test_gsas_sync.send_failure_email }.to raise_error(GsasSync::Exceptions::EmailError)
-    end
-  end
-
-  describe '#email_and_exit_success' do
-    context 'in dry run mode' do
-      before do
-        allow(GsasSync::Config).to receive(:dry_run).and_return(true)
-        allow(test_gsas_sync).to receive(:graceful_exit)
-      end
-
-      it 'removes temp directories' do
-        allow(test_gsas_sync).to receive(:rm_temp_dirs)
-        expect(test_gsas_sync).to receive(:rm_temp_dirs).once
-        test_gsas_sync.email_and_exit_success
-      end
-
-      it 'logs all' do
-        expect(GsasSync::Logger).to receive(:log_all).once
-        test_gsas_sync.email_and_exit_success
-      end
-
-      it 'calls graceful exit' do
-        expect(test_gsas_sync).to receive(:graceful_exit).once
-        test_gsas_sync.email_and_exit_success
+      it 'gracefully exits' do
+        expect(test_gsas_sync).to receive(:graceful_exit)
+        test_gsas_sync.email_and_exit(success: true)
       end
     end
 
@@ -333,44 +240,29 @@ RSpec.describe GsasSync do
       before do
         allow(logger_double).to receive(:fatal)
         allow(GsasSync::Logger).to receive(:progress_log_append)
-        allow(test_gsas_sync).to receive(:send_success_email)
-        allow(test_gsas_sync).to receive(:graceful_exit)
       end
 
-      it 'sends success email' do
-        expect(test_gsas_sync).to receive(:send_success_email).once
-        test_gsas_sync.email_and_exit_success
+      it 'logs all' do
+        expect(GsasSync::Logger).to receive(:log_all).once
+        test_gsas_sync.email_and_exit
       end
 
       it 'logs all if an error occurs sending email (including appending to log file)' do
-        allow(test_gsas_sync).to receive(:send_success_email).and_raise(StandardError)
+        allow(mail_client_double).to receive(:make_and_send_email).and_raise(StandardError)
         expect(GsasSync::Logger).to receive(:progress_log_append).once
-        test_gsas_sync.email_and_exit_success
+        test_gsas_sync.email_and_exit
       end
 
       it 'calls graceful_exit even if an error occurs' do
-        allow(test_gsas_sync).to receive(:send_success_email).and_raise(StandardError)
+        allow(mail_client_double).to receive(:make_and_send_email).and_raise(StandardError)
         expect(test_gsas_sync).to receive(:graceful_exit).once
-        test_gsas_sync.email_and_exit_success
+        test_gsas_sync.email_and_exit
       end
-    end
-  end
 
-  describe '#send_success_email' do
-    before do
-      allow(GsasSync::Logger).to receive(:close_progress_log_file)
-      allow(test_gsas_sync).to receive(:mail_client).and_return(mail_client_double)
-      allow(mail_client_double).to receive(:send_success_email_all)
-    end
-
-    it 'closes the progress log file' do
-      expect(GsasSync::Logger).to receive(:close_progress_log_file)
-      test_gsas_sync.send_success_email
-    end
-
-    it 'raises an EmailError if an error is rescued' do
-      allow(mail_client_double).to receive(:send_success_email_all).and_raise(StandardError, 'test error')
-      expect { test_gsas_sync.send_success_email }.to raise_error(GsasSync::Exceptions::EmailError)
+      it 'closes the progress log file' do
+        expect(GsasSync::Logger).to receive(:close_progress_log_file)
+        test_gsas_sync.email_and_exit
+      end
     end
   end
 

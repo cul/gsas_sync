@@ -114,12 +114,11 @@ class GsasSync
       Logger.log_all("DRY RUN: Skipping #{result_str} email notification.")
       graceful_exit
     end
-    puts 'shouldnt be here'
     Logger.log_all("Sending #{result_str} email notification. This will close the progress.log file...")
     Logger.close_progress_log_file
     rm_temp_dirs
     mail_client.make_and_send_email(success: success)
-  rescue StandardError => e # TODO: catch in outer scope
+  rescue StandardError => e
     Logger.stdout_logger.fatal("#{e.class} - #{e.message}")
     Logger.progress_log_append("#{e.class} - #{e.message}")
   ensure
@@ -128,7 +127,6 @@ class GsasSync
 
   # Gracefully terminates the program, closing any open OS resources
   def graceful_exit
-    puts 'inside graceful exit.........'
     Logger.stdout_logger.info('Gracefully shutting down...')
     @sftp_client.disconnect unless @sftp_client.nil? || @sftp_client.closed?
     Logger.close_progress_log_file

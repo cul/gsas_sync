@@ -2,11 +2,8 @@
 
 require 'spec_helper'
 
-RSpec.describe GsasSync::EmailClient, focus: true do
+RSpec.describe GsasSync::EmailClient do
   # GLOBAL TESTING OBJECTS (ALL OTHERS SCOPED TO EXAMPLE GROUPS OR EXAMPLES)
-  test_recipient = 'test_recipient'
-  test_subject = 'test_subject'
-  test_body = 'test_body'
   test_log_file_name = 'test_log_file.log'
   test_config = {
     'host' => 'test_smtp_server',
