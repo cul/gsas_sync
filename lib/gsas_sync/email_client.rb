@@ -35,6 +35,16 @@ class GsasSync
       "#{FileUtils.pwd}/#{@log_file}"
     end
 
+    def make_and_send_email(success:)
+      if success
+        send_email(subject: SUCCESS_SUBJECT, body: SUCCESS_BODY,
+                   log_message: 'Success email sent')
+      else
+        send_email(subject: FAILURE_SUBJECT, body: FAILURE_BODY,
+                   log_message: 'Failure email sent')
+      end
+    end
+
     def send_email(subject:, body:, log_message:)
       attachment = log_file_str
       sender = @sender
@@ -48,16 +58,6 @@ class GsasSync
         end
       end
       Logger.stdout_logger.debug log_message
-    end
-
-    def make_and_send_email(success:)
-      if success
-        send_email(subject: SUCCESS_SUBJECT, body: SUCCESS_BODY,
-                   log_message: 'Success email sent')
-      else
-        send_email(subject: FAILURE_SUBJECT, body: FAILURE_BODY,
-                   log_message: 'Failure email sent')
-      end
     end
   end
 end
