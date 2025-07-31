@@ -19,23 +19,10 @@ set :job_template, "/usr/local/bin/mailifrc -s 'Error - :email_subject' :error_r
 # Override default rake task job type
 # job_type :rake, 'cd :path && :environment_variable=:environment bundle exec rake :task --silent :output'
 
-# every 1.minute do
-#   command 'date > /tmp/hello.txt'
-# end
-
 every 1.minute do
-  # command to write current stage and stuff to a text file
-  # command 'date > /tmp/hello.txt'
-  command "echo #{@environment} > /tmp/whenever_stuff.txt"
-  # command "echo \"#{fetch(:whenever_stage)} | #{fetch(:whenever_identifier)}\" > /tmp/whenever_stuff.txt"
+  command "echo \"#{@environment} | #{@path}\" > /tmp/whenever_stuff.txt"
 end
 
 # every :month do
-#   command 'ruby -v > /tmp/hello_ruby.txt'
-#   command 'ruby /tmp/gsas_deployment_testing/gsas_sync_staging/current/gsas_sync_main.rb --log-level fatal'
-# end
-
-# every 1.minute do
-#   command 'ruby -v > /tmp/hello_ruby.txt'
-#   command 'cd /tmp/gsas_deployment_testing/gsas_sync_staging/current/ && ruby gsas_sync_main.rb --log-level fatal'
+command 'ruby /tmp/gsas_deployment_testing/gsas_sync_staging/current/gsas_sync_main.rb --log-level fatal'
 # end
