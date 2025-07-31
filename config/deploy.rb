@@ -18,7 +18,7 @@ set :deploy_to, -> { "/opt/scripts/#{fetch(:deploy_name)}" }
 
 # Tag edits to the cron file - these will be overwritten each new deployment
 set :whenever_identifier, -> { "#{fetch(:application)}_#{fetch(:stage)}" }
-set :whenever_command, 'bundle exec whenever'
+# set :whenever_command, 'bundle exec whenever'
 set :whenever_roles, %w[app]
 # set :whenever_environment, -> { fetch(:stage) }
 
