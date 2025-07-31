@@ -20,7 +20,7 @@ set :deploy_to, -> { "/opt/scripts/#{fetch(:deploy_name)}" }
 set :whenever_identifier, -> { "#{fetch(:application)}_#{fetch(:stage)}" }
 # set :whenever_command, 'bundle exec whenever'
 set :whenever_roles, %w[app]
-# set :whenever_environment, -> { fetch(:stage) }
+set :whenever_environment, -> { fetch(:stage) }
 
 # Configure location where capistrano.log will be written
 set :format_options, log_file: 'logs/capistrano.log'

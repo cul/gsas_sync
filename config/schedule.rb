@@ -26,7 +26,8 @@ set :job_template, "/usr/local/bin/mailifrc -s 'Error - :email_subject' :error_r
 every 1.minute do
   # command to write current stage and stuff to a text file
   # command 'date > /tmp/hello.txt'
-  command "echo \"#{fetch(:whenever_sage)} | #{fetch(:whenever_identifier)}\" > /tmp/whenever_stuff.txt"
+  command "echo #{@environment} > /tmp/whenever_stuff.txt"
+  # command "echo \"#{fetch(:whenever_stage)} | #{fetch(:whenever_identifier)}\" > /tmp/whenever_stuff.txt"
 end
 
 # every :month do
