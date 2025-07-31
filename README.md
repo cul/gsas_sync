@@ -2,7 +2,7 @@
 
 The GsasSync script manages the transfer of dissertations from GSAS to the library's collections.
 
-In particular, it will run on a cron job once a month in order to syncronize and verify the transfer of GSAS dissertations. It retrieves the files from an [AWS Transfer Server](http://docs.aws.amazon.com/transfer/latest/userguide/what-is-aws-transfer-family.html) via [SFTP](https://en.wikipedia.org/wiki/SSH_File_Transfer_Protocol), verifies that the correct files have been downloaded successfully and in the expected format, and then removes them from the remote server. This Transfer Server is managed by GSAS, who will upload each month and maintain backup copies. An email will be sent to relevant parties when the process succeeds or fails (with a log file attached).
+In particular, it will run on a cron job once a month in order to syncronize and verify the transfer of GSAS dissertations. It retrieves the files from an [AWS Transfer Server](http://docs.aws.amazon.com/transfer/latest/userguide/what-is-aws-transfer-family.html) via [SFTP](https://en.wikipedia.org/wiki/SSH_File_Transfer_Protocol), verifies that the correct files have been downloaded successfully and in the expected format, and then removes them from the remote server. This Transfer Server is managed by GSAS, who will upload items each month and maintain backup copies. An email will be sent to relevant parties when the process succeeds or fails (with a log file attached).
 
 ## Local development
 ### Install and run the script

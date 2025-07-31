@@ -13,17 +13,10 @@ class GsasSync
 
       # Validates that the config file exists, and the listed storage and logs directories exist as well
       def validate_config
-        err_t = GsasSync::Exceptions::GsasError
-        raise err_t, "No config file provided at '#{CONFIG_LOCATION}'" unless File.exist? CONFIG_LOCATION
-
-        unless File.exist? storage_directory
-          raise err_t,
-                "Storage directory '#{storage_directory}' in config file does not exist."
-        end
-        return if File.exist? logs_directory
-
-        raise err_t,
-              "The logs directory '#{logs_directory}'in config file does not exist."
+        err_t = Exceptions::GsasError
+        raise err_t, 'No config file provided.' unless File.exist? CONFIG_LOCATION
+        raise err_t, 'Storage directory in config file does not exist.' unless File.exist? storage_directory
+        raise err_t, 'The logs directory in config file does not exist.' unless File.exist? logs_directory
       end
 
       def sftp_server
@@ -53,7 +46,7 @@ class GsasSync
       end
 
       def init_config_file
-        raise GsasSync::Exceptions::GsasError, 'Config File could not be loaded' unless File.exist?(CONFIG_LOCATION)
+        raise Exceptions::GsasError, 'Config File could not be loaded' unless File.exist?(CONFIG_LOCATION)
 
         config_contents = File.read(CONFIG_LOCATION)
         YAML.load(config_contents)['config'] # TODO: use safe_load?

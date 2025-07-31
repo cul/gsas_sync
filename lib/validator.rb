@@ -25,7 +25,7 @@ class Validator
   ALLOWED_ALGS = %w[sha256 md5].freeze # TODO: update this list of expected Checksum algorithms as needed
 
   # Allow the caller to determine exactly what did and did not pass
-  attr_reader :files_present, :no_bad_chars, :good_manifest, :chucksums
+  attr_reader :files_present, :no_bad_chars, :valid_manifest, :checksums
 
   # Params:
   #  - dissertations_directory: Pathname object representing a yyyy_mm_dissertations.temp directory
@@ -274,7 +274,5 @@ class Validator
     else
       GsasSync::Logger.progress("-- ❌ Validation Failure: #{message} --")
     end
-    # TODO: consider returning valid here, then rename to log_validation_result_and_return_value
-    # con : this may make testing a little awkward; mock the method to have it return whatever was passed as first param
   end
 end

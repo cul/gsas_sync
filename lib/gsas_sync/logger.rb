@@ -2,7 +2,7 @@
 
 # GsasSync::Logger controls all logging that occurs while the script is executing.
 # There are two types of logs: the standard out logger (stdout_logger) and the
-# progress logger (progress_logger). stdout_logger logs messages related to the
+# progress logger (progress_log). stdout_logger logs messages related to the
 # execution of the script itself to the standard output of the machine executing the
 # script. The progress_logger writes its logs to a .log file and it is more concerned
 # with which steps in the download and verification processes actually succeed or

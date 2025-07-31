@@ -4,15 +4,12 @@ require 'spec_helper'
 
 RSpec.describe GsasSync::EmailClient do
   # GLOBAL TESTING OBJECTS (ALL OTHERS SCOPED TO EXAMPLE GROUPS OR EXAMPLES)
-  test_recipient = 'test_recipient'
-  test_subject = 'test_subject'
-  test_body = 'test_body'
   test_log_file_name = 'test_log_file.log'
   test_config = {
     'host' => 'test_smtp_server',
     'port' => 0,
     'sender_address' => 'test_sender_email',
-    'recipients' => ['test_recipient_email']
+    'recipients' => ['test_recipient_email', 'second_test_email', 'third_test_email']
   }
   let(:logger_double) { instance_double(Logger) }
   let(:test_email_client) { described_class.new(test_log_file_name) } # 'test_log_file.log') }
@@ -51,39 +48,31 @@ RSpec.describe GsasSync::EmailClient do
     end
   end
 
-  describe '#send_success_email_all' do
-    it 'calls #send_success_email for each email in @recipients' do
-      num_recipients = GsasSync::Config.mail_server['recipients'].length
-      expect(test_email_client).to receive(:send_success_email).exactly(num_recipients).times
+  describe '#make_and_send_email' do
+    it 'correctly formats success email and calls send_email' do
+      expect(test_email_client).to receive(:send_email).with(subject: GsasSync::EmailClient::SUCCESS_SUBJECT,
+                                                             body: GsasSync::EmailClient::SUCCESS_BODY,
+                                                             log_message: 'Success email sent')
+      test_email_client.make_and_send_email(success: true)
+    end
 
-      test_email_client.send_success_email_all
+    it 'correctly formats failure email and calls send_email' do
+      expect(test_email_client).to receive(:send_email).with(subject: GsasSync::EmailClient::FAILURE_SUBJECT,
+                                                             body: GsasSync::EmailClient::FAILURE_BODY,
+                                                             log_message: 'Failure email sent')
+      test_email_client.make_and_send_email(success: false)
     end
   end
 
-  describe '#send_success_email' do
-    it 'calls Mail::deliver' do
+  describe '#send_email' do
+    before do
       allow(Mail).to receive(:deliver)
-
-      expect(Mail).to receive(:deliver)
-      test_email_client.send_success_email(test_recipient, test_subject, test_body)
     end
-  end
 
-  describe '#send_failure_email_all' do
-    it 'calls #send_failure_email for each email in @recipients' do
+    it 'sends an email for each recipient' do
       num_recipients = GsasSync::Config.mail_server['recipients'].length
-      expect(test_email_client).to receive(:send_failure_email).exactly(num_recipients).times
-
-      test_email_client.send_failure_email_all
-    end
-  end
-
-  describe '#send_failure_email' do
-    it 'calls Mail::deliver' do
-      allow(Mail).to receive(:deliver)
-
-      expect(Mail).to receive(:deliver)
-      test_email_client.send_failure_email(test_recipient, test_subject, test_body)
+      expect(Mail).to receive(:deliver).exactly(num_recipients).times
+      test_email_client.send_email(subject: 'test', body: 'test', log_message: 'test')
     end
   end
 end

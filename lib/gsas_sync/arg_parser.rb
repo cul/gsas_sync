@@ -9,7 +9,15 @@ module GsasSync::ArgParser
   ############################## METHODS #######################################
   # Parse the arguments given thru the command line to determine the old and new
   # CSV files we are comaring.
-  def self.parse_cl_args # rubocop:disable Metrics/AbcSize
+  def self.parse_cl_args
+    options = options_hash
+    log_lvl = options.key?(:log_lvl) ? options[:log_lvl] : DEFAULT_STDOUT_LOG_LEVEL
+    dry_run = options.key?(:dry_run) ? true : false
+    GsasSync::Logger.stdout_log_level = log_lvl
+    { log_lvl: log_lvl, dry_run: dry_run }
+  end
+
+  def self.options_hash
     options = {}
     OptionParser.new { |opts|
       opts.banner = USAGE_STR
@@ -25,10 +33,7 @@ module GsasSync::ArgParser
       end
       options[:help] = opts.help
     }.parse!(into: options)
-    log_lvl = options.key?(:log_lvl) ? options[:log_lvl] : DEFAULT_STDOUT_LOG_LEVEL
-    dry_run = options.key?(:dry_run) ? true : false
-    GsasSync::Logger.stdout_log_level = log_lvl
-    { log_lvl: log_lvl, dry_run: dry_run }
+    options
   end
 
   def self.log_lvl_to_str(lvl)
