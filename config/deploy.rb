@@ -18,9 +18,12 @@ set :deploy_to, -> { "/opt/scripts/#{fetch(:deploy_name)}" }
 
 # Tag edits to the cron file - these will be overwritten each new deployment
 set :whenever_identifier, -> { "#{fetch(:application)}_#{fetch(:stage)}" }
-# set :whenever_command, 'bundle exec whenever'
 set :whenever_roles, %w[app]
 set :whenever_environment, -> { fetch(:stage) }
+set :whenever_variables, -> { "script_env=#{fetch(:deploy_name)}" }
+set :whenever_command, lambda {
+  "#{fetch(:rvm_command_prefix)} bundle exec whenever --set 'script_env=#{fetch(:deploy_name)}&path=#{deploy_to}/current/gsas_sync_main.rb'"
+}
 
 # Configure location where capistrano.log will be written
 set :format_options, log_file: 'logs/capistrano.log'
@@ -48,10 +51,11 @@ append :linked_files, 'config/config.yml'
 # maintain two rvm installations for two different Linux OS versions.
 set :rvm_custom_path, '~/.rvm-alma8' # default ~/.rvm
 # RVM Setup, for selecting the correct ruby version (instead of capistrano-rvm gem)
-set :rvm_ruby_version, fetch(:deploy_name) # This RVM alias must exist on the server
-[:rake, :gem, :bundle, :ruby].each do |command_to_prefix|
+set :rvm_ruby_version, fetch(:deploy_name) # This RVM alias must exist on the server -- and make sure to use it
+set :rvm_command_prefix, "#{fetch(:rvm_custom_path, '~/.rvm')}/bin/rvm #{fetch(:rvm_ruby_version)} do"
+[:rake, :gem, :bundle, :ruby, :whenever].each do |command_to_prefix|
   SSHKit.config.command_map.prefix[command_to_prefix].push(
-    "#{fetch(:rvm_custom_path, '~/.rvm')}/bin/rvm #{fetch(:rvm_ruby_version)} do"
+    fetch(:rvm_command_prefix)
   )
 end
 
