@@ -20,7 +20,8 @@ set :job_template, "/usr/local/bin/mailifrc -s 'Error - :email_subject' :error_r
 # job_type :rake, 'cd :path && :environment_variable=:environment bundle exec rake :task --silent :output'
 
 every 1.minute do
-  command "echo \"#{@environment} | #{@path}\" > /tmp/whenever_stuff.txt"
+  command "cd #{@path} && ruby testscript.rb"
+  # command "echo \"#{@environment} | #{@path}\" > /tmp/whenever_stuff.txt"
 end
 
 # every :month do
