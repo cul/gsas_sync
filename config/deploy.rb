@@ -22,7 +22,7 @@ set :whenever_roles, %w[app]
 set :whenever_environment, -> { fetch(:stage) }
 set :whenever_variables, -> { "script_env=#{fetch(:deploy_name)}" }
 set :whenever_command, lambda {
-  "#{fetch(:rvm_command_prefix)} bundle exec whenever --set 'script_env=#{fetch(:deploy_name)}&path=#{deploy_to}/current/gsas_sync_main.rb'"
+  "#{fetch(:rvm_command_prefix)} bundle exec whenever --set 'script_env=#{fetch(:deploy_name)}&path=#{deploy_to}/current/gsas_sync_main.rb&rvm_prefix=#{fetch(:rvm_command_prefix)}'"
 }
 
 # Configure location where capistrano.log will be written
@@ -44,7 +44,7 @@ append :linked_files, 'config/config.yml'
 
 # Default value for linked_dirs is []
 # append :linked_dirs, "log", "tmp/pids", "tmp/cache", "tmp/sockets", "public/system", "vendor", "storage"
-# append :linked_dirs, '.bundle'
+append :linked_dirs, '.bundle'
 
 # Until we retire all old CentOS VMs, we need to set the rvm_custom_path because rvm is installed
 # in a non-standard location for our AlmaLinux VMs.  This is because our service accounts need to
