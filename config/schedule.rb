@@ -21,7 +21,8 @@ set :job_template, "/usr/local/bin/mailifrc -s 'Error - :email_subject' :error_r
 
 every 1.minute do
   # commnad "cd #{@path} && ~/.rvm-alma8/bin/rvm ENV[script_env] do ruby testscript.rb"
-  command "echo \"#{@environment} | #{@path}\ | #{@set_variables}\" > /tmp/whenever_stuff.txt"
+  command "echo 'test' > /tmp/test_cron.txt"
+  command "echo '#{@environment} | #{@path} ---- maybe this == :path| #{@set_variables} :my_cats_name' > /tmp/whenever_stuff.txt"
 end
 
 # every :month do

@@ -20,7 +20,7 @@ set :deploy_to, -> { "/opt/scripts/#{fetch(:deploy_name)}" }
 set :whenever_identifier, -> { "#{fetch(:application)}_#{fetch(:stage)}" }
 set :whenever_roles, %w[app]
 set :whenever_environment, -> { fetch(:stage) }
-set :whenever_variables, -> { "'script_env=#{fetch(:deploy_name)}'" }
+set :whenever_variables, -> { "'script_env=#{fetch(:deploy_name)}&my_cats_name=Alice'" }
 # set :whenever_command, lambda {
 #   "whenever --set 'script_env=#{fetch(:deploy_name)}&path=#{deploy_to}/current/gsas_sync_main.rb&rvm_prefix=#{fetch(:rvm_command_prefix)}'"
 # }
