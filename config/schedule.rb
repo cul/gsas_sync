@@ -19,12 +19,10 @@ set :job_template, "/usr/local/bin/mailifrc -s 'Error - :email_subject' :error_r
 # Override default rake task job type
 # job_type :rake, 'cd :path && :environment_variable=:environment bundle exec rake :task --silent :output'
 
-every 1.minute do
-  # commnad "cd #{@path} && ~/.rvm-alma8/bin/rvm ENV[script_env] do ruby testscript.rb"
-  # command "echo 'test' > /tmp/test_cron.txt"
-  # command "echo '#{@environment}\n #{@rvm_command_prefix}\n ' > /tmp/whenever_stuff.txt"
-  command "#{@rvm_command_prefix} #{@path}/testscript.rb"
-end
+# every 1.minute do
+#   # The following format works for running a ruby script:
+#   # command "#{@rvm_command_prefix} #{@path}/testscript.rb"
+# end
 
 # every :month do
 # command 'ruby /tmp/gsas_deployment_testing/gsas_sync_staging/current/gsas_sync_main.rb --log-level fatal'
