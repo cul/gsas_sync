@@ -19,6 +19,11 @@ set :job_template, "/usr/local/bin/mailifrc -s 'Error - :email_subject' :error_r
 # Override default rake task job type
 # job_type :rake, 'cd :path && :environment_variable=:environment bundle exec rake :task --silent :output'
 
+# Run dissertation sync script once a day on days 1-7 of each month:
+# every '0 0 1-7 * *' do
+#  #  command "#{@rvm_command_prefix} #{@path}/gsas_sync_main.rb"
+# end
+
 # every 1.minute do
 #   # The following format works for running a ruby script:
 #   # command "#{@rvm_command_prefix} #{@path}/testscript.rb"
