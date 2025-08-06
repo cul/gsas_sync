@@ -11,8 +11,7 @@
 
 config/config*
 temp
-log
-logs
+*.log
 我能.我能
 dissertations*
 !spec/fixtures/temp
