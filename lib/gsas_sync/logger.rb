@@ -112,11 +112,11 @@ class GsasSync::Logger
     # Deletes the oldest log file if there are MAX_NUM_LOG_FILES log files
     def rotate_logs
       logs_dir = Pathname.new("#{FileUtils.pwd}/#{GsasSync::Config.logs_directory}")
-      children = logs_dir.children
+      children = logs_dir.children.reject { |pn| ['capistrano.log'].include? pn.basename.to_s }
       return if children.length < MAX_NUM_LOG_FILES
 
       oldest = children.first # Arbitrary
-      logs_dir.children.each do |child|
+      children.each do |child|
         next if child == oldest
 
         oldest = child if older?(child, oldest)
@@ -125,10 +125,9 @@ class GsasSync::Logger
     end
 
     # Returns true if the time_a is determined to be older than time_b
-    # child and target are Pathname objects
-    def older?(time_a, time_b)
-      time_stamp_a = Time.strptime(LOG_FILE_REGEX.match(time_a.basename.to_s)[1], TIME_FORMAT_STR)
-      time_stamp_b = Time.strptime(LOG_FILE_REGEX.match(time_b.basename.to_s)[1], TIME_FORMAT_STR)
+    def older?(pathname_a, pathname_b)
+      time_stamp_a = Time.strptime(LOG_FILE_REGEX.match(pathname_a.basename.to_s)[1], TIME_FORMAT_STR)
+      time_stamp_b = Time.strptime(LOG_FILE_REGEX.match(pathname_b.basename.to_s)[1], TIME_FORMAT_STR)
       case time_stamp_a <=> time_stamp_b
       when -1 then true
       when 1 then false
