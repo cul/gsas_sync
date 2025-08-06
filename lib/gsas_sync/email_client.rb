@@ -17,7 +17,6 @@ class GsasSync
       @server = Config.mail_server['host']
       @port = Config.mail_server['port']
       @sender = Config.mail_server['sender_address']
-      @recipients = Config.mail_server['recipients']
       @success_recipients = Config.success_recipients
       @failure_recipients = Config.failure_recipients
       @log_file = "#{Config.logs_directory}/#{log_file_name}"
