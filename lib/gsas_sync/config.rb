@@ -31,6 +31,14 @@ class GsasSync
         config['mail_server']
       end
 
+      def success_recipients
+        config['mail_server']['success_recipients']
+      end
+
+      def failure_recipients
+        config['mail_server']['failure_recipients']
+      end
+
       def logs_directory
         config['logs']['directory']
       end

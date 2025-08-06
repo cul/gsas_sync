@@ -18,6 +18,8 @@ class GsasSync
       @port = Config.mail_server['port']
       @sender = Config.mail_server['sender_address']
       @recipients = Config.mail_server['recipients']
+      @success_recipients = Config.success_recipients
+      @failure_recipients = Config.failure_recipients
       @log_file = "#{Config.logs_directory}/#{log_file_name}"
       init_mail_client
     end
@@ -38,17 +40,17 @@ class GsasSync
     def make_and_send_email(success:)
       if success
         send_email(subject: SUCCESS_SUBJECT, body: SUCCESS_BODY,
-                   log_message: 'Success email sent')
+                   log_message: 'Success email sent', recipients: @success_recipients)
       else
         send_email(subject: FAILURE_SUBJECT, body: FAILURE_BODY,
-                   log_message: 'Failure email sent')
+                   log_message: 'Failure email sent', recipients: @failure_recipients)
       end
     end
 
-    def send_email(subject:, body:, log_message:)
+    def send_email(subject:, body:, log_message:, recipients:)
       attachment = log_file_str
       sender = @sender
-      @recipients.each do |recipient|
+      recipients.each do |recipient|
         Mail.deliver do
           from sender
           to recipient
