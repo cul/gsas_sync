@@ -53,6 +53,8 @@ class GsasSync
             'The dissertations directory we are trying to download already exists on the local machine.'
     end
 
+    raise Exceptions::NoFilestoSync unless @sftp_client.dissertation_dirs?
+
     @sftp_client.ls(@uploads_dir)
     @sftp_client.dl_dissertation_dirs_to_temp(@uploads_dir, @preservation_dir)
     @downloaded_dirs = @sftp_client.dissertation_dirs_array
@@ -72,7 +74,7 @@ class GsasSync
     validators = init_validators
     if validators.empty?
       raise Exceptions::ValidationError,
-            'Unable to locate dissertation directory on remote'
+            'Unable to create validator objects - could not locate directories for validation'
     end
 
     valid = true
