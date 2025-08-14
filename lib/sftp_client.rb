@@ -150,6 +150,14 @@ class SftpClient
     false
   end
 
+  # Return true if there is at least one 'yyyy_mm_dd_dissertations' directory in the remote uploads directory
+  def dissertation_dirs?(uploads = 'uploads')
+    sftp_session.dir.foreach(uploads) do |entry|
+      return true if entry.name.match?(Validator::DISSERTATION_DIR_REGEX)
+    end
+    false
+  end
+
   # directory : string name of the directory (not an absolute path)
   def ls(directory = '.')
     GsasSync::Logger.stdout_logger.info "`ls -la #{directory}` on remote server :"
