@@ -27,6 +27,7 @@ class GsasSync
 
   # Deletes any .temp directories from the @preservation_dir on the local filesystem
   def rm_temp_dirs
+    Logger.log_all('Removing any local downloaded .temp directory(ies)')
     @downloaded_dirs.each do |dir|
       FileUtils.rm_rf("#{@preservation_dir}/#{dir}.temp") if File.directory?("#{@preservation_dir}/#{dir}.temp")
     end
@@ -48,10 +49,7 @@ class GsasSync
       raise Exceptions::SftpClientError, 'Remote transfer server does not have an uploads directory'
     end
 
-    if @sftp_client.dissertations_dir_already_exists?(@preservation_dir, @uploads_dir)
-      raise Exceptions::SftpClientError,
-            'The dissertations directory we are trying to download already exists on the local machine.'
-    end
+    @sftp_client.check_dissertations_dir_already_exists
 
     raise Exceptions::NoFilestoSync unless @sftp_client.dissertation_dirs?
 
@@ -112,13 +110,13 @@ class GsasSync
   # An exception may occur sending mail
   def email_and_exit(success: true)
     result_str = success ? 'success' : 'failure'
+    rm_temp_dirs
     if Config.dry_run
       Logger.log_all("DRY RUN: Skipping #{result_str} email notification.")
       graceful_exit
     end
     Logger.log_all("Sending #{result_str} email notification. This will close the progress.log file...")
     Logger.close_progress_log_file
-    rm_temp_dirs
     mail_client.make_and_send_email(success: success)
   rescue StandardError => e
     Logger.stdout_logger.fatal("#{e.class} - #{e.message}")

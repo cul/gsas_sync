@@ -112,7 +112,7 @@ RSpec.describe GsasSync do
       allow(sftp_client_double).to receive(:connect)
       allow(sftp_client_double).to receive(:uploads_dir?).and_return(true)
       allow(sftp_client_double).to receive(:dissertation_dirs?).and_return(true)
-      allow(sftp_client_double).to receive(:dissertations_dir_already_exists?).and_return(false)
+      allow(sftp_client_double).to receive(:check_dissertations_dir_already_exists)
       allow(sftp_client_double).to receive(:ls)
       allow(sftp_client_double).to receive(:dl_dissertation_dirs_to_temp).and_return(false)
       allow(sftp_client_double).to receive(:dissertation_dirs_array).and_return(test_downloaded_dirs)
@@ -133,11 +133,6 @@ RSpec.describe GsasSync do
     it 'raises NoFilesToSync error if there are no directories to download from the transfer server' do
       allow(sftp_client_double).to receive(:dissertation_dirs?).and_return(false)
       expect { test_gsas_sync.attempt_download }.to raise_error(GsasSync::Exceptions::NoFilestoSync)
-    end
-
-    it 'raises SftpClientError if the dissertations directory on the transfer server has already been downloaded' do
-      allow(sftp_client_double).to receive(:dissertations_dir_already_exists?).and_return(true)
-      expect { test_gsas_sync.attempt_download }.to raise_error(GsasSync::Exceptions::SftpClientError)
     end
   end
 
@@ -244,6 +239,7 @@ RSpec.describe GsasSync do
 
     context 'in non-dry run' do
       before do
+        allow(test_gsas_sync).to receive(:rm_temp_dirs)
         allow(logger_double).to receive(:fatal)
         allow(GsasSync::Logger).to receive(:progress_log_append)
       end

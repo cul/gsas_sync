@@ -22,7 +22,7 @@ set :whenever_roles, %w[app]
 set :whenever_environment, -> { fetch(:stage) }
 set :whenever_variables, -> { "'script_env=#{fetch(:deploy_name)}&rvm_command_prefix=#{fetch(:rvm_command_prefix)}'" }
 # set :whenever_command, lambda {
-#   "whenever --set 'script_env=#{fetch(:deploy_name)}&path=#{deploy_to}/current/gsas_sync_main.rb&rvm_prefix=#{fetch(:rvm_command_prefix)}'"
+#   "whenever --set 'script_env=#{fetch(:deploy_name)}&path=#{deploy_to}/current/gsas_sync_main.rb&rvm_prefix=#{fetch(:rvm_command_prefix)}'" # rubocop:disable Layout/LineLength
 # }
 
 # Configure location where capistrano.log will be written
