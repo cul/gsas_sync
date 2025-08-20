@@ -24,6 +24,12 @@ set :job_template, "/usr/local/bin/mailifrc -s 'Error - :email_subject' :error_r
 #  #  command "#{@rvm_command_prefix} #{@path}/gsas_sync_main.rb"
 # end
 
+# For deployment testing: this prints the commands we will run in an actual production environment
+every 1.minute do
+  message = "'#{@rvm_command_prefix} #{path}/gsas_sync_main.rb'"
+  command "echo #{message} > /tmp/gsas_sync_command.txt"
+end
+
 # every 1.minute do
 #   # The following format works for running a ruby script:
 #   # command "#{@rvm_command_prefix} #{@path}/testscript.rb"
