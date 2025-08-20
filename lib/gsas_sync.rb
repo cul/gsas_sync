@@ -49,7 +49,7 @@ class GsasSync
       raise Exceptions::SftpClientError, 'Remote transfer server does not have an uploads directory'
     end
 
-    @sftp_client.check_dissertations_dir_already_exists
+    @sftp_client.check_dissertations_dir_already_exists(@preservation_dir, @uploads_dir)
 
     raise Exceptions::NoFilestoSync unless @sftp_client.dissertation_dirs?
 
