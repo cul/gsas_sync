@@ -9,16 +9,15 @@ set :repo_url, "git@github.com:cul/#{fetch(:repo_name)}.git/"
 set :deploy_name, -> { "#{fetch(:application)}_#{fetch(:stage)}" }
 set :remote_user, 'ldpdserv' # because we are accessing preservation storage
 
-# Default branch is :master
-set :branch, 'deploy_testing' # TODO: use main when actually deploying !
-# ask :branch, `git rev-parse --abbrev-ref HEAD`.chomp
+ask :branch, `git rev-parse --abbrev-ref HEAD`.chomp
 
 # deploy_name = gsas_sync_{dev|test|prod}
 set :deploy_to, -> { "/opt/scripts/#{fetch(:deploy_name)}" }
 
 # Tag edits to the cron file - these will be overwritten each new deployment
 set :whenever_identifier, -> { "#{fetch(:application)}_#{fetch(:stage)}" }
-set :whenever_roles, %w[production_app] # Only servers with the production_app role will edit the crontab
+# Only servers with the production_app role will edit the crontab
+set :whenever_roles, %w[production_app]
 set :whenever_environment, -> { fetch(:stage) }
 # Pass data to be used in schedule.rb
 set :whenever_variables, -> { "'script_env=#{fetch(:deploy_name)}&rvm_command_prefix=#{fetch(:rvm_command_prefix)}'" }
