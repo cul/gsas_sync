@@ -140,7 +140,7 @@ class SftpClient
   # params:
   #  - preservation_dir : absolute path of the preservations directory on the local machine
   #  - uploads : name of the directory on the remote that contains the yyyy_mm_dissertations directories
-  def check_dissertations_dir_already_exists(preservation_dir, uploads = 'uploads')
+  def check_dissertations_dir_already_exists!(preservation_dir, uploads = 'uploads')
     remote_dissertation_directories = []
     sftp_session.dir.foreach(uploads) do |entry|
       remote_dissertation_directories.push(entry.name) if entry.name.match?(Validator::DISSERTATION_DIR_REGEX)
