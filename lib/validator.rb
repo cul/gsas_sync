@@ -257,13 +257,17 @@ class Validator
     end
     valid = true
     @manifest_hash.each do |file_path, checksum|
-      next if @digest_class.file(file_path).hexdigest.upcase == checksum.upcase
+      next if hex_checksums_match?(@digest_class.file(file_path).hexdigest, checksum)
 
       GsasSync::Logger.log_all_warn("Checksum does not match manifest value: #{file_path}")
       valid = false
     end
     log_validation_result(valid, 'All checksum values match manifest')
     valid
+  end
+
+  def hex_checksums_match?(sum1, sum2)
+    sum1.upcase == sum2.upcase
   end
 
   private
