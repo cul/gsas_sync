@@ -117,7 +117,7 @@ RSpec.describe Validator do
   describe '#valid_manifest_file?' do
     before do
       test_validator.instance_variable_set(:@manifest_filename, 'manifest-sha256.txt')
-      allow(test_validator).to receive(:find_manifest_file)
+      allow(test_validator).to receive(:find_manifest_file!)
       allow(test_validator).to receive(:init_manifest_digest)
     end
 
@@ -157,9 +157,9 @@ RSpec.describe Validator do
       end
     end
 
-    context 'if an error occurs in #find_manifest_file' do
+    context 'if an error occurs in #find_manifest_file!' do
       before do
-        allow(test_validator).to receive(:find_manifest_file).and_raise(StandardError)
+        allow(test_validator).to receive(:find_manifest_file!).and_raise(StandardError)
       end
 
       it 'logs the error' do
@@ -188,10 +188,10 @@ RSpec.describe Validator do
     end
   end
 
-  describe '#find_manifest_file' do
+  describe '#find_manifest_file!' do
     context 'if one, validly-named manifest file is present' do
       it 'sets the @manifest_filename instance variable' do
-        test_validator.find_manifest_file
+        test_validator.find_manifest_file!
 
         expect(test_validator.instance_variable_get(:@manifest_filename)).to eql('manifest-sha256.txt')
       end
@@ -203,12 +203,12 @@ RSpec.describe Validator do
       end
 
       it 'raises a ValidationError' do
-        expect { test_validator.find_manifest_file }.to raise_error(GsasSync::Exceptions::ValidationError)
+        expect { test_validator.find_manifest_file! }.to raise_error(GsasSync::Exceptions::ValidationError)
       end
 
       it 'does not set the @manifest_filename instance variable' do
         begin
-          test_validator.find_manifest_file
+          test_validator.find_manifest_file!
         rescue GsasSync::Exceptions::ValidationError # rubocop:disable Lint/SuppressedException
         end
         expect(test_validator.instance_variable_get(:@manifest_filename)).to be('')
@@ -221,12 +221,12 @@ RSpec.describe Validator do
       end
 
       it 'raises a ValidationError' do
-        expect { test_validator.find_manifest_file }.to raise_error(GsasSync::Exceptions::ValidationError)
+        expect { test_validator.find_manifest_file! }.to raise_error(GsasSync::Exceptions::ValidationError)
       end
 
       it 'does not set the @manifest_filename instance variable' do
         begin
-          test_validator.find_manifest_file
+          test_validator.find_manifest_file!
         rescue GsasSync::Exceptions::ValidationError # rubocop:disable Lint/SuppressedException
         end
         expect(test_validator.instance_variable_get(:@manifest_filename)).to be('')

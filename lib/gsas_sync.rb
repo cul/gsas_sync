@@ -36,20 +36,20 @@ class GsasSync
   # Attempts to download files from the remote server to a temporary directory using the SFTP client
   # Will handle any exceptions that occur, including fatal error
   def download_files_to_temp_dir
-    verify_dissertations_directory_exists
-    attempt_download
+    verify_dissertations_directory_exists!
+    attempt_download!
     Logger.progress('Successful transfer from remote host to local temporary directory')
   end
 
   # Side effect: sets the @downloaded_dirs array based on what was downloaded by the @sftp_client
-  def attempt_download
+  def attempt_download!
     @sftp_client = SftpClient.new
     @sftp_client.connect
     unless @sftp_client.uploads_dir?
       raise Exceptions::SftpClientError, 'Remote transfer server does not have an uploads directory'
     end
 
-    @sftp_client.check_dissertations_dir_already_exists
+    @sftp_client.check_dissertations_dir_already_exists!(@preservation_dir, @uploads_dir)
 
     raise Exceptions::NoFilestoSync unless @sftp_client.dissertation_dirs?
 
@@ -60,7 +60,7 @@ class GsasSync
 
   # Verifies that the preservation directory described in the configuration file exists on the local machine
   # Returns nil. Raises a GsasSync::Exceptions::GsasError if it is not present.
-  def verify_dissertations_directory_exists
+  def verify_dissertations_directory_exists!
     return if File.directory? @preservation_dir
 
     raise GsasSync::Exceptions::GsasError,
@@ -68,7 +68,7 @@ class GsasSync
   end
 
   # Create Validator objects for each yyyy_mm_dissertations directory and runs all validations, returning the result
-  def validate_downloaded_files
+  def validate_downloaded_files!
     validators = init_validators
     if validators.empty?
       raise Exceptions::ValidationError,

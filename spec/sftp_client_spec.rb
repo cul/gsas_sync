@@ -248,7 +248,7 @@ RSpec.describe SftpClient do
     end
   end
 
-  describe '#check_dissertations_dir_already_exists' do
+  describe '#check_dissertations_dir_already_exists!' do
     test_preservation_dir = 'test_preservation_dir '
     test_uploads = 'test_uploads '
     it 'raises an error if the dissertation directory found on remote is present in preservation directory on local machine' do # rubocop:disable Layout/LineLength
@@ -261,8 +261,8 @@ RSpec.describe SftpClient do
       allow(File).to receive(:directory?).with("#{test_preservation_dir}/#{fake_dir.name}").and_return(true)
 
       expect {
-        test_sftp_client.check_dissertations_dir_already_exists(test_preservation_dir,
-                                                                test_uploads)
+        test_sftp_client.check_dissertations_dir_already_exists!(test_preservation_dir,
+                                                                 test_uploads)
       }.to raise_error(GsasSync::Exceptions::GsasError)
     end
 
@@ -276,8 +276,8 @@ RSpec.describe SftpClient do
       allow(File).to receive(:directory?).with("#{test_preservation_dir}/#{fake_dir.name}.temp").and_return(true)
 
       expect {
-        test_sftp_client.check_dissertations_dir_already_exists(test_preservation_dir,
-                                                                test_uploads)
+        test_sftp_client.check_dissertations_dir_already_exists!(test_preservation_dir,
+                                                                 test_uploads)
       }.to raise_error(GsasSync::Exceptions::GsasError)
     end
 
@@ -289,8 +289,8 @@ RSpec.describe SftpClient do
                                             .and_yield(fake_file)
       allow(File).to receive(:directory?).and_return(false)
 
-      expect(test_sftp_client.check_dissertations_dir_already_exists(test_preservation_dir,
-                                                                     test_uploads)).to eq([fake_dir.name])
+      expect(test_sftp_client.check_dissertations_dir_already_exists!(test_preservation_dir,
+                                                                      test_uploads)).to eq([fake_dir.name])
     end
   end
 

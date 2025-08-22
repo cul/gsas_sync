@@ -51,7 +51,7 @@ end
 
 GsasSync::Logger.begin_step 'Validating downloaded files'
 begin
-  valid = gsas_sync.validate_downloaded_files
+  valid = gsas_sync.validate_downloaded_files!
 rescue StandardError => e
   GsasSync::Logger.log_all_fatal("An unexpected fatal error occurred while validating the downloaded files: #{e}. Unable to proceed. Exiting...") # rubocop:disable Layout/LineLength
   gsas_sync.email_and_exit(success: false)
