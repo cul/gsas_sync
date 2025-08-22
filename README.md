@@ -52,7 +52,10 @@ config:
     host: MAIL_SERVER_IP_OR_HOSTNAME
     port: PORT
     sender_address: "gsas-sync-no-reply@library.columbia.edu" (CAN BE ANY EMAIL YOU WOULD LIKE)
-    recipients:
+    success_recipients:
+      - EMAIL_RECPIENT_ADDRESS
+      - ...
+    failure_recipients:
       - EMAIL_RECPIENT_ADDRESS
       - ...
   logs:
