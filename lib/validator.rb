@@ -62,7 +62,7 @@ class Validator
 
   # VALIDATION RULE 1.1
   def valid_manifest_file?
-    find_manifest_file
+    find_manifest_file!
 
     # algorithm substr is present and is a valid hash format
     alg = @manifest_filename.match(MANIFEST_REGEX)[1]
@@ -80,7 +80,7 @@ class Validator
   end
 
   # Side effet: sets the @manifest_filename instance variable on success
-  def find_manifest_file
+  def find_manifest_file!
     matches = @dissertation_dir.children.select do |child|
       child.basename.to_s.match?(MANIFEST_REGEX)
     end
@@ -196,7 +196,7 @@ class Validator
   # TODO : We could use this same logic in #files_in_manifest_exist? ; it's just an array difference the other direction
   # (manifest_files_array - downloaded_files_array) -- this may be a performant refactor to do in the future.
   def all_downloaded_files_in_manifest?
-    raise GsasSync::Exceptions::ValidationError, 'manifest hash is undefined' if @manifest_hash.nil?
+    raise GsasSync::Exceptions::GsasError, 'manifest hash is undefined' if @manifest_hash.nil?
 
     downloaded_files_array = recursive_files_array(@dissertation_dir).sort
     manifest_files_array = @manifest_hash.keys.sort

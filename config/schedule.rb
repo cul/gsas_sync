@@ -13,7 +13,7 @@
 # This is a CUL provided script. More details can be found here:
 # https://wiki.library.columbia.edu/display/USGSERVICES/Cron+Management
 set :email_subject, 'GSAS Sync Cron Error (via Whenever Gem)'
-set :error_recipient, 'bg2918@columbia.edu' # Todo change to dev email from config or better to directly read the yml file
+set :error_recipient, 'bg2918@columbia.edu' # Todo change to dev email the config yml file
 set :job_template, "/usr/local/bin/mailifrc -s 'Error - :email_subject' :error_recipient -- /bin/bash -l -c ':job'"
 
 # Override default rake task job type

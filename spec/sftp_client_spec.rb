@@ -248,10 +248,10 @@ RSpec.describe SftpClient do
     end
   end
 
-  describe '#dissertations_dir_already_exists?' do
+  describe '#check_dissertations_dir_already_exists!' do
     test_preservation_dir = 'test_preservation_dir '
     test_uploads = 'test_uploads '
-    it 'returns true if the dissertation directory found on remote is present in preservation directory on local machine' do # rubocop:disable Layout/LineLength
+    it 'raises an error if the dissertation directory found on remote is present in preservation directory on local machine' do # rubocop:disable Layout/LineLength
       allow(dir_double).to receive(:foreach).with(test_uploads)
                                             .and_yield(fake_dir_self)
                                             .and_yield(fake_dir)
@@ -260,10 +260,28 @@ RSpec.describe SftpClient do
       allow(File).to receive(:directory?).and_return(false)
       allow(File).to receive(:directory?).with("#{test_preservation_dir}/#{fake_dir.name}").and_return(true)
 
-      expect(test_sftp_client.dissertations_dir_already_exists?(test_preservation_dir, test_uploads)).to be(true)
+      expect {
+        test_sftp_client.check_dissertations_dir_already_exists!(test_preservation_dir,
+                                                                 test_uploads)
+      }.to raise_error(GsasSync::Exceptions::GsasError)
     end
 
-    it 'returns false if the dissertation directory found on remote is not present in preservation directory on local machine' do # rubocop:disable Layout/LineLength
+    it 'raises an error if the temp dissertation directory found on remote is present in preservation directory on local machine' do # rubocop:disable Layout/LineLength
+      allow(dir_double).to receive(:foreach).with(test_uploads)
+                                            .and_yield(fake_dir_self)
+                                            .and_yield(fake_dir)
+                                            .and_yield(fake_uploads_dir)
+                                            .and_yield(fake_file)
+      allow(File).to receive(:directory?).and_return(false)
+      allow(File).to receive(:directory?).with("#{test_preservation_dir}/#{fake_dir.name}.temp").and_return(true)
+
+      expect {
+        test_sftp_client.check_dissertations_dir_already_exists!(test_preservation_dir,
+                                                                 test_uploads)
+      }.to raise_error(GsasSync::Exceptions::GsasError)
+    end
+
+    it 'completes execution if the dissertation directory found on remote is not present in preservation directory on local machine' do # rubocop:disable Layout/LineLength
       allow(dir_double).to receive(:foreach).with(test_uploads)
                                             .and_yield(fake_dir_self)
                                             .and_yield(fake_dir)
@@ -271,7 +289,8 @@ RSpec.describe SftpClient do
                                             .and_yield(fake_file)
       allow(File).to receive(:directory?).and_return(false)
 
-      expect(test_sftp_client.dissertations_dir_already_exists?(test_preservation_dir, test_uploads)).to be(false)
+      expect(test_sftp_client.check_dissertations_dir_already_exists!(test_preservation_dir,
+                                                                      test_uploads)).to eq([fake_dir.name])
     end
   end
 
