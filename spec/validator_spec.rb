@@ -7,6 +7,7 @@ RSpec.describe Validator do
   #  - WE USE THE DATE-PREFIX 2000_01
   #  - WE ASSUME THERE IS ONLY ONE file.txt IN data/, AND IT IS EMPTY #  - WE ASSUME THE MANIFEST FILE USES SHA256
   empty_file_checksum = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+  empty_file_checksum_diff_cases = 'E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855'
   empty_file_checksum_md5 = 'd41d8cd98f00b204e9800998ecf8427e'
 
   let(:logger_double) { instance_double(Logger) }
@@ -15,6 +16,7 @@ RSpec.describe Validator do
   let(:num_nested_items) { 5 }
   let(:test_validator) { described_class.new(base_dir) }
   let(:expected_test_manifest_hash) { { base_dir.join('data/file.txt').to_s => empty_file_checksum } }
+  let(:expected_test_manifest_hash_diff_cases) { { base_dir.join('data/file.txt').to_s => empty_file_checksum_diff_cases } } # rubocop:disable Layout/LineLength
   let(:expected_test_manifest_hash_md5) { { base_dir.join('data/file.txt').to_s => empty_file_checksum_md5 } }
   let(:test_downloaded_files_array) { [base_dir.join('data/file.txt').to_s] }
   let(:digest_class_double) { class_double(Digest::SHA256) }
@@ -610,6 +612,11 @@ RSpec.describe Validator do
       end
 
       it 'returns true' do
+        expect(test_validator.valid_checksums?).to be(true)
+      end
+
+      it 'returns true even if the checksums use different cases' do
+        test_validator.instance_variable_set(:@manifest_hash, expected_test_manifest_hash_diff_cases)
         expect(test_validator.valid_checksums?).to be(true)
       end
 
