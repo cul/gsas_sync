@@ -97,7 +97,9 @@ Alternatively, you can run your own server to use as the test transfer server. T
 3.  All files listed in the manifest file are accounted for
     3.1.  All files listed in the manifest exist in the downloaded temp directory
     3.2.  All files in the downloaded temp directory (besides metadata files) are listed in the manifest
-4.  The checksums listed for each file in the manifest match the checksums for what was downloaded
+4. The manifest file is valid
+    4.1 The checksums listed for each file in the manifest match the checksums for what was downloaded
+    4.2 Each checksum listed in the manifest file is unique
 ```
 
 ### Expected transfer server directory structure

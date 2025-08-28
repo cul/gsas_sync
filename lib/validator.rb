@@ -17,7 +17,8 @@ require 'cul/preservation_utils'
 # 3.  : All files listed in the manifest file are accounted for
 # 3.1 : All files listed in the manifest exist in the downloaded temp directory
 # 3.2 : All files in the downloaded temp directory (besides metadata files) are listed in the manifest
-# 4.  : The checksums listed for each file in the manifest match the checksums for what was downloaded
+# 4.1 : The checksums listed for each file in the manifest match the checksums for what was downloaded
+# 4.2 : Each checksum listed in the manifest file is unique
 class Validator
   DATE_PREFIX_LEN = 7
   DISSERTATION_DIR_REGEX = /^\d{4}_\d{2}_dissertations$/
@@ -255,6 +256,34 @@ class Validator
       GsasSync::Logger.log_all_warn('Invalid manifest file or checksum algorithm. Unable to validate checksums.')
       return false
     end
+
+    valid = checksums_match?
+    valid &= checksums_unique?
+
+    log_validation_result(valid, 'All checksum values match manifest')
+    valid
+  end
+
+  # Returns true if the checksums listed in the manifest file are all unique among one another
+  def checksums_unique?
+    hash_copy = {}
+    result = true
+    @manifest_hash.each do |filepath, checksum|
+      if hash_copy.key?(checksum)
+        GsasSync::Logger.log_all_warn("The checksums listed in the manifest file are not unique; a duplicate file may have been uploaded. Suspicious files: #{filepath} & #{hash_copy[checksum]}.") # rubocop:disable Layout/LineLength
+        result = false
+        next
+      end
+
+      hash_copy[checksum] = filepath
+    end
+
+    result
+  end
+
+  # Returns true if the checksums listed in the manifest match the calculated checksums of the
+  # files that were downloaded
+  def checksums_match?
     valid = true
     @manifest_hash.each do |file_path, checksum|
       next if hex_checksums_match?(@digest_class.file(file_path).hexdigest, checksum)
@@ -262,7 +291,6 @@ class Validator
       GsasSync::Logger.log_all_warn("Checksum does not match manifest value: #{file_path}")
       valid = false
     end
-    log_validation_result(valid, 'All checksum values match manifest')
     valid
   end
 
