@@ -25,12 +25,3 @@ set :job_template, "/usr/local/bin/mailifrc -s 'Error - :email_subject' :error_r
 #   command "#{@rvm_command_prefix} #{@path}/gsas_sync_main.rb"
 # end
 ################################################################################
-
-# every 1.minute do
-#   # The following format works for running a ruby script:
-#   # command "#{@rvm_command_prefix} #{@path}/testscript.rb"
-# end
-
-# every :month do
-# command 'ruby /tmp/gsas_deployment_testing/gsas_sync_staging/current/gsas_sync_main.rb --log-level fatal'
-# end

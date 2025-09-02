@@ -18,6 +18,10 @@ RSpec.describe Validator do
   let(:expected_test_manifest_hash) { { base_dir.join('data/file.txt').to_s => empty_file_checksum } }
   let(:expected_test_manifest_hash_diff_cases) { { base_dir.join('data/file.txt').to_s => empty_file_checksum_diff_cases } } # rubocop:disable Layout/LineLength
   let(:expected_test_manifest_hash_md5) { { base_dir.join('data/file.txt').to_s => empty_file_checksum_md5 } }
+  let(:expected_test_manifest_hash_not_unique) do
+    { base_dir.join('data/file.txt').to_s => empty_file_checksum,
+      base_dir.join('data/file2.txt').to_s => empty_file_checksum }
+  end
   let(:test_downloaded_files_array) { [base_dir.join('data/file.txt').to_s] }
   let(:digest_class_double) { class_double(Digest::SHA256) }
   let(:digest_class_double_md5) { class_double(Digest::MD5) }
@@ -583,7 +587,9 @@ RSpec.describe Validator do
   end
 
   describe '#valid_checksums?' do
-    let(:digest_instance_double) { instance_double(Digest::Instance) }
+    before do
+      allow(test_validator).to receive(:log_validation_result)
+    end
 
     context 'if #valid_manifest_and_digest_instance_variables? returns false' do
       before do
@@ -600,30 +606,58 @@ RSpec.describe Validator do
       end
     end
 
-    context 'with a successful transfer' do
+    context 'with valid checksums' do
       before do
         allow(test_validator).to receive(:valid_manifest_and_digest_instance_variables?).and_return(true)
-        allow(test_validator).to receive(:log_validation_result)
+        allow(test_validator).to receive(:checksums_match?).and_return(true)
+        allow(test_validator).to receive(:checksums_unique?).and_return(true)
+      end
+
+      it 'returns true' do
+        expect(test_validator.valid_checksums?).to be(true)
+      end
+    end
+  end
+
+  describe '#checksums_match?' do
+    let(:digest_instance_double) { instance_double(Digest::Instance) }
+
+    context 'with valid checksums' do
+      before do
         test_validator.instance_variable_set(:@manifest_hash, expected_test_manifest_hash)
-        # test_validator.instance_variable_set(:@digest_class, digest_class_double)
         test_validator.instance_variable_set(:@digest_class, digest_class_double)
         allow(digest_class_double).to receive(:file).and_return(digest_instance_double)
         allow(digest_instance_double).to receive(:hexdigest).and_return(empty_file_checksum)
       end
 
       it 'returns true' do
-        expect(test_validator.valid_checksums?).to be(true)
+        expect(test_validator.checksums_match?).to be(true)
       end
 
       it 'returns true even if the checksums use different cases' do
         test_validator.instance_variable_set(:@manifest_hash, expected_test_manifest_hash_diff_cases)
-        expect(test_validator.valid_checksums?).to be(true)
+        expect(test_validator.checksums_match?).to be(true)
       end
 
       it 'computes the checksum for each file in the @manifest_hash' do
         expect(digest_instance_double).to receive(:hexdigest).once
-        test_validator.valid_checksums?
+        test_validator.checksums_match?
       end
+    end
+  end
+
+  describe '#checksums_unique?' do
+    before do
+      test_validator.instance_variable_set(:@manifest_hash, expected_test_manifest_hash)
+    end
+
+    it 'returns true with a valid manifest file' do
+      expect(test_validator.checksums_unique?).to be(true)
+    end
+
+    it 'returns false with an invalid manifest file' do
+      test_validator.instance_variable_set(:@manifest_hash, expected_test_manifest_hash_not_unique)
+      expect(test_validator.checksums_unique?).to be(false)
     end
   end
 end
