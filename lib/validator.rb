@@ -160,6 +160,7 @@ class Validator
 
     build_manifest_hash
     valid = files_in_manifest_exist?
+    valid &= no_metadata_files_in_manifest?
     valid &= all_downloaded_files_in_manifest?
     log_validation_result(valid, 'All files in manifest are accounted for')
     valid
@@ -178,40 +179,56 @@ class Validator
   end
 
   # VALIDATION RULE 3.1
-  # Returns false if any of the files listed in the manifest are not present in the downloaded @dissertation_dir
-  # Removes entries for any non-existent files from the @manifest_hash
+  # Returns false if any of the files listed in the manifest are not present in the downloaded @dissertation_dir/data
+  # directory.
+  # Removes entries for any non-existent files and files not nested under data/ from the @manifest_hash
   def files_in_manifest_exist?
     result = true
     @manifest_hash.each_key do |file|
-      puts "checking if this file from manifest exists in the downloaded dir: #{file}"
-      next if File.exist?(file)
+      next if File.exist?(file) && file.split('/').include?('data')
 
-      GsasSync::Logger.log_all_warn("‼️ The file #{file} is listed in the manifest file but does not exist in the downloaded directory") # rubocop:disable Layout/LineLength
-      @manifest_hash.delete(file)
+      GsasSync::Logger.log_all_warn("‼️ The file '#{file}' is listed in the manifest file but does not exist in the downloaded data/ directory") # rubocop:disable Layout/LineLength
       result = false
     end
     result
   end
 
   # VALIDATION RULE 3.2
-  # returns true if all files in the @dissertation_dir directory are listed in the manifest file
-  # TODO : We could use this same logic in #files_in_manifest_exist? ; it's just an array difference the other direction
-  # (manifest_files_array - downloaded_files_array) -- this may be a performant refactor to do in the future.
+  # Returns true if there are no assets or items csv metadata files listed in the
+  # manifest file (only non-metadata files nested under data/ should be there).
+  def no_metadata_files_in_manifest?
+    @manifest_hash.each_key do |file|
+      return false if metadata_file? file
+    end
+    true
+  end
+
+  # VALIDATION RULE 3.3
+  # returns true if all files in the @dissertation_dir/data directory are listed in the manifest file
   def all_downloaded_files_in_manifest?
     raise GsasSync::Exceptions::GsasError, 'manifest hash is undefined' if @manifest_hash.nil?
 
-    downloaded_files_array = recursive_files_array(@dissertation_dir).sort
-    manifest_files_array = @manifest_hash.keys.sort
+    downloaded_files_array = recursive_files_array(@dissertation_dir) # .sort
 
-    return true if downloaded_files_array == manifest_files_array
+    result = true
+    downloaded_files_array.each do |file|
+      unless @manifest_hash.key? file
+        GsasSync::Logger.log_all_warn("‼️ The following file was downloaded, but is not listed in the manifest: #{file}") # rubocop:disable Layout/LineLength
+        result = false
+      end
+    end
 
-    diff = downloaded_files_array - manifest_files_array
-    GsasSync::Logger.log_all_warn("‼️ The following file(s) were downloaded, but are not listed in the manifest: #{diff}") # rubocop:disable Layout/LineLength
-    false
+    result
+
+    # return true if downloaded_files_array == manifest_files_array
+
+    # diff = downloaded_files_array - manifest_files_array
+    # GsasSync::Logger.log_all_warn("‼️ The following file(s) were downloaded, but are not listed in the manifest: #{diff}") # rubocop:disable Layout/LineLength
+    # false
   end
 
   # Returns array containing filenames (as strings) of every file under the given parent directory, recursively
-  # including nested directory's files
+  # including nested directory's files -- EXCLUDING any metadata files.
   def recursive_files_array(parent = @dissertation_dir)
     array = []
     parent.each_child do |child|
