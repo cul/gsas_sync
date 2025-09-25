@@ -159,7 +159,7 @@ class Validator
     return false unless valid_manifest_and_digest_instance_variables?
 
     build_manifest_hash
-    valid = files_in_manifest_exist?
+    valid = files_in_manifest_exist_in_data_dir?
     valid &= no_metadata_files_in_manifest?
     valid &= all_downloaded_files_in_manifest?
     log_validation_result(valid, 'All files in manifest are accounted for')
@@ -182,7 +182,7 @@ class Validator
   # Returns false if any of the files listed in the manifest are not present in the downloaded @dissertation_dir/data
   # directory.
   # Removes entries for any non-existent files and files not nested under data/ from the @manifest_hash
-  def files_in_manifest_exist?
+  def files_in_manifest_exist_in_data_dir?
     missing_files = @manifest_hash.keys.reject { |file| File.exist?(file) && file.split('/').include?('data') }
 
     missing_files.each do |file|
