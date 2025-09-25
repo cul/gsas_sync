@@ -183,24 +183,28 @@ class Validator
   # directory.
   # Removes entries for any non-existent files and files not nested under data/ from the @manifest_hash
   def files_in_manifest_exist?
-    result = true
-    @manifest_hash.each_key do |file|
-      next if File.exist?(file) && file.split('/').include?('data')
+    missing_files = @manifest_hash.keys.reject { |file| File.exist?(file) && file.split('/').include?('data') }
 
+    missing_files.each do |file|
       GsasSync::Logger.log_all_warn("‼️ The file '#{file}' is listed in the manifest file but does not exist in the downloaded data/ directory") # rubocop:disable Layout/LineLength
-      result = false
+      @manifest_hash.delete file
     end
-    result
+
+    missing_files.empty?
   end
 
   # VALIDATION RULE 3.2
   # Returns true if there are no assets or items csv metadata files listed in the
   # manifest file (only non-metadata files nested under data/ should be there).
+  # Checks each file listed in the manifest
   def no_metadata_files_in_manifest?
-    @manifest_hash.each_key do |file|
-      return false if metadata_file? file
+    metadata_files = @manifest_hash.keys.select { |path| metadata_file? File.basename(path) }
+
+    metadata_files.each do |path|
+      GsasSync::Logger.log_all_warn("‼️ The #{File.basename(path)} metadata file should not be included in the manifest.") # rubocop:disable Layout/LineLength
     end
-    true
+
+    metadata_files.empty?
   end
 
   # VALIDATION RULE 3.3
@@ -208,23 +212,15 @@ class Validator
   def all_downloaded_files_in_manifest?
     raise GsasSync::Exceptions::GsasError, 'manifest hash is undefined' if @manifest_hash.nil?
 
-    downloaded_files_array = recursive_files_array(@dissertation_dir) # .sort
+    downloaded_files_array = recursive_files_array(@dissertation_dir)
+    # Any file that is not a key in the hash is unlisted
+    unlisted_files = downloaded_files_array.reject { |path| @manifest_hash.key? path }
 
-    result = true
-    downloaded_files_array.each do |file|
-      unless @manifest_hash.key? file
-        GsasSync::Logger.log_all_warn("‼️ The following file was downloaded, but is not listed in the manifest: #{file}") # rubocop:disable Layout/LineLength
-        result = false
-      end
+    unlisted_files.each do |path|
+      GsasSync::Logger.log_all_warn("‼️ The following file was downloaded, but is not listed in the manifest: #{path}")
     end
 
-    result
-
-    # return true if downloaded_files_array == manifest_files_array
-
-    # diff = downloaded_files_array - manifest_files_array
-    # GsasSync::Logger.log_all_warn("‼️ The following file(s) were downloaded, but are not listed in the manifest: #{diff}") # rubocop:disable Layout/LineLength
-    # false
+    unlisted_files.empty?
   end
 
   # Returns array containing filenames (as strings) of every file under the given parent directory, recursively
