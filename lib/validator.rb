@@ -183,6 +183,7 @@ class Validator
   def files_in_manifest_exist?
     result = true
     @manifest_hash.each_key do |file|
+      puts "checking if this file from manifest exists in the downloaded dir: #{file}"
       next if File.exist?(file)
 
       GsasSync::Logger.log_all_warn("‼️ The file #{file} is listed in the manifest file but does not exist in the downloaded directory") # rubocop:disable Layout/LineLength
