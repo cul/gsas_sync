@@ -181,12 +181,13 @@ class Validator
   # VALIDATION RULE 3.1
   # Returns true if there are no assets or items csv metadata files listed in the
   # manifest file (only non-metadata files nested under data/ should be there).
-  # Checks each file listed in the manifest
+  # Checks each file listed in the manifest. Removes any metadata files from the manifest hash.
   def no_metadata_files_in_manifest?
     metadata_files = @manifest_hash.keys.select { |path| metadata_file? File.basename(path) }
 
     metadata_files.each do |path|
       GsasSync::Logger.log_all_warn("‼️ The #{File.basename(path)} metadata file should not be included in the manifest.") # rubocop:disable Layout/LineLength
+      @manifest_hash.delete path
     end
 
     metadata_files.empty?
