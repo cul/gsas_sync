@@ -159,8 +159,8 @@ class Validator
     return false unless valid_manifest_and_digest_instance_variables?
 
     build_manifest_hash
-    valid = files_in_manifest_exist_in_data_dir?
-    valid &= no_metadata_files_in_manifest?
+    valid = no_metadata_files_in_manifest?
+    valid &= files_in_manifest_exist_in_data_dir?
     valid &= all_downloaded_files_in_manifest?
     log_validation_result(valid, 'All files in manifest are accounted for')
     valid
@@ -179,6 +179,20 @@ class Validator
   end
 
   # VALIDATION RULE 3.1
+  # Returns true if there are no assets or items csv metadata files listed in the
+  # manifest file (only non-metadata files nested under data/ should be there).
+  # Checks each file listed in the manifest
+  def no_metadata_files_in_manifest?
+    metadata_files = @manifest_hash.keys.select { |path| metadata_file? File.basename(path) }
+
+    metadata_files.each do |path|
+      GsasSync::Logger.log_all_warn("‼️ The #{File.basename(path)} metadata file should not be included in the manifest.") # rubocop:disable Layout/LineLength
+    end
+
+    metadata_files.empty?
+  end
+
+  # VALIDATION RULE 3.2
   # Returns false if any of the files listed in the manifest are not present in the downloaded @dissertation_dir/data
   # directory.
   # Removes entries for any non-existent files and files not nested under data/ from the @manifest_hash
@@ -191,20 +205,6 @@ class Validator
     end
 
     missing_files.empty?
-  end
-
-  # VALIDATION RULE 3.2
-  # Returns true if there are no assets or items csv metadata files listed in the
-  # manifest file (only non-metadata files nested under data/ should be there).
-  # Checks each file listed in the manifest
-  def no_metadata_files_in_manifest?
-    metadata_files = @manifest_hash.keys.select { |path| metadata_file? File.basename(path) }
-
-    metadata_files.each do |path|
-      GsasSync::Logger.log_all_warn("‼️ The #{File.basename(path)} metadata file should not be included in the manifest.") # rubocop:disable Layout/LineLength
-    end
-
-    metadata_files.empty?
   end
 
   # VALIDATION RULE 3.3
@@ -243,11 +243,7 @@ class Validator
 
   # Returns true if the given filename is a metadata file; either an items csv, assets csv, or manifest file
   def metadata_file?(filename)
-    if ["#{@date_prefix_str}_items.csv", "#{@date_prefix_str}_assets.csv", @manifest_filename].include?(filename)
-      return true
-    end
-
-    false
+    ["#{@date_prefix_str}_items.csv", "#{@date_prefix_str}_assets.csv", @manifest_filename].include?(filename)
   end
 
   # Returns false and logs warning if either the @manifest_file or @digest_class instance variables are not set

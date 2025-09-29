@@ -95,9 +95,9 @@ Alternatively, you can run your own server to use as the test transfer server. T
     1.3. An yyyy_mm_assets.csv file with a matching prefix exist
 2.  No undesireable characters are present in any of the file/directory names
 3.  All files listed in the manifest file are accounted for
-    3.1.  All files listed in the manifest exist in the downloaded data/ temp directory
-    3.2 No metadata files (assets and items csv, e.g.) are listed in the manifest file
-    3.3.  All files in the downloaded temp directory (besides metadata files) are listed in the manifest
+    3.1. No metadata files (assets and items csv, e.g.) are listed in the manifest file
+    3.2. All files listed in the manifest exist in the downloaded data/ temp directory
+    3.3. All files in the downloaded temp directory (besides metadata files) are listed in the manifest
 4. The manifest file is valid
     4.1 The checksums listed for each file in the manifest match the checksums for what was downloaded
     4.2 Each checksum listed in the manifest file is unique
