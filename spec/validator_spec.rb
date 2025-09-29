@@ -15,13 +15,22 @@ RSpec.describe Validator do
   let(:test_date_prefix_str) { '2000_01' }
   let(:num_nested_items) { 5 }
   let(:test_validator) { described_class.new(base_dir) }
-  let(:expected_test_manifest_hash) { { base_dir.join('data/file.txt').to_s => empty_file_checksum } }
-  let(:expected_test_manifest_hash_diff_cases) { { base_dir.join('data/file.txt').to_s => empty_file_checksum_diff_cases } } # rubocop:disable Layout/LineLength
+  let(:test_manifest_hash) { { base_dir.join('data/file.txt').to_s => empty_file_checksum } }
+  let(:test_manifest_hash_diff_cases) { { base_dir.join('data/file.txt').to_s => empty_file_checksum_diff_cases } }
   let(:expected_test_manifest_hash_md5) { { base_dir.join('data/file.txt').to_s => empty_file_checksum_md5 } }
-  let(:expected_test_manifest_hash_not_unique) do
+  let(:test_manifest_hash_not_unique) do
     { base_dir.join('data/file.txt').to_s => empty_file_checksum,
       base_dir.join('data/file2.txt').to_s => empty_file_checksum }
   end
+  let(:test_metatdata_hash_with_metadata_files) do
+    { base_dir.join('data/2000_01_items.csv') => 'abcd',
+      base_dir.join('data/2000_01_assets.csv') => 'abcd' }
+  end
+  let(:test_manifest_hash_not_in_data_dir) do
+    { base_dir.join('not_data/file1.csv') => 'abcd',
+      base_dir.join('not_data/file2.csv') => 'abcd' }
+  end
+
   let(:test_downloaded_files_array) { [base_dir.join('data/file.txt').to_s] }
   let(:digest_class_double) { class_double(Digest::SHA256) }
   let(:digest_class_double_md5) { class_double(Digest::MD5) }
@@ -390,7 +399,7 @@ RSpec.describe Validator do
     before do
       allow(test_validator).to receive(:valid_manifest_and_digest_instance_variables?).and_return(true)
       allow(test_validator).to receive(:build_manifest_hash)
-      allow(test_validator).to receive(:files_in_manifest_exist?).and_return(true)
+      allow(test_validator).to receive(:files_in_manifest_exist_in_data_dir?).and_return(true)
       allow(test_validator).to receive(:all_downloaded_files_in_manifest?).and_return(true)
       allow(test_validator).to receive(:log_validation_result)
       test_validator.instance_variable_set(:@manifest_filename, 'manifest-sha256.txt')
@@ -403,7 +412,7 @@ RSpec.describe Validator do
 
     it 'returns does not perform validations if #valid_manifest_and_digest_instance_variables returns false' do
       allow(test_validator).to receive(:valid_manifest_and_digest_instance_variables?).and_return(false)
-      expect(test_validator).not_to receive(:files_in_manifest_exist?)
+      expect(test_validator).not_to receive(:files_in_manifest_exist_in_data_dir?)
       expect(test_validator).not_to receive(:all_downloaded_files_in_manifest?)
     end
   end
@@ -414,16 +423,16 @@ RSpec.describe Validator do
       test_validator.instance_variable_set(:@manifest_filename, 'manifest-sha256.txt')
       test_validator.build_manifest_hash
 
-      expect(test_validator.instance_variable_get(:@manifest_hash)).to eq(expected_test_manifest_hash)
+      expect(test_validator.instance_variable_get(:@manifest_hash)).to eq(test_manifest_hash)
     end
   end
 
-  describe '#files_in_manifest_exist?' do
+  describe '#files_in_manifest_exist_in_data_dir?' do
     context 'given a manifest with all existing files' do
       it 'returns true' do
-        test_validator.instance_variable_set(:@manifest_hash, expected_test_manifest_hash)
+        test_validator.instance_variable_set(:@manifest_hash, test_manifest_hash)
 
-        expect(test_validator.files_in_manifest_exist?).to be(true)
+        expect(test_validator.files_in_manifest_exist_in_data_dir?).to be(true)
       end
     end
 
@@ -433,24 +442,68 @@ RSpec.describe Validator do
       end
 
       it 'returns false' do
-        expect(test_validator.files_in_manifest_exist?).to be(false)
+        expect(test_validator.files_in_manifest_exist_in_data_dir?).to be(false)
       end
 
       it 'logs a warning to all' do
         expect(GsasSync::Logger).to receive(:log_all_warn)
-        test_validator.files_in_manifest_exist?
+        test_validator.files_in_manifest_exist_in_data_dir?
       end
 
       it 'deletes the missing file from the @manifest_hash object' do
-        test_validator.files_in_manifest_exist?
+        test_validator.files_in_manifest_exist_in_data_dir?
         expect(test_validator.instance_variable_get(:@manifest_hash)).to eq({})
+      end
+    end
+
+    context 'given a manifest with files not in data/ directory' do
+      before do
+        test_validator.instance_variable_set(:@manifest_hash, test_manifest_hash_not_in_data_dir)
+      end
+
+      it 'returns false' do
+        expect(test_validator.files_in_manifest_exist_in_data_dir?).to be(false)
+      end
+
+      it 'logs each offending file' do
+        expect(GsasSync::Logger).to receive(:log_all_warn).twice
+        test_validator.files_in_manifest_exist_in_data_dir?
+      end
+    end
+  end
+
+  describe '#no_metadata_files_in_manifest?' do
+    context 'when the manifest is valid' do
+      before do
+        test_validator.instance_variable_set(:@manifest_hash, test_manifest_hash)
+        allow(test_validator).to receive(:metadata_file?).and_return false
+      end
+
+      it 'returns true if there are no metadata files in the manifest' do
+        expect(test_validator.no_metadata_files_in_manifest?).to be(true)
+      end
+    end
+
+    context 'when the manifest is invalid' do
+      before do
+        test_validator.instance_variable_set(:@manifest_hash, test_metatdata_hash_with_metadata_files)
+        allow(test_validator).to receive(:metadata_file?).and_return true
+      end
+
+      it 'returns false if there is a metadata file in the manifest' do
+        expect(test_validator.no_metadata_files_in_manifest?).to be(false)
+      end
+
+      it 'logs all offending files when multiple' do
+        expect(GsasSync::Logger).to receive(:log_all_warn).twice
+        test_validator.no_metadata_files_in_manifest?
       end
     end
   end
 
   describe '#all_downloaded_files_in_manifest?' do
     before do
-      test_validator.instance_variable_set(:@manifest_hash, expected_test_manifest_hash)
+      test_validator.instance_variable_set(:@manifest_hash, test_manifest_hash)
       allow(test_validator).to receive(:recursive_files_array).and_return(test_downloaded_files_array)
     end
 
@@ -624,7 +677,7 @@ RSpec.describe Validator do
 
     context 'with valid checksums' do
       before do
-        test_validator.instance_variable_set(:@manifest_hash, expected_test_manifest_hash)
+        test_validator.instance_variable_set(:@manifest_hash, test_manifest_hash)
         test_validator.instance_variable_set(:@digest_class, digest_class_double)
         allow(digest_class_double).to receive(:file).and_return(digest_instance_double)
         allow(digest_instance_double).to receive(:hexdigest).and_return(empty_file_checksum)
@@ -635,7 +688,7 @@ RSpec.describe Validator do
       end
 
       it 'returns true even if the checksums use different cases' do
-        test_validator.instance_variable_set(:@manifest_hash, expected_test_manifest_hash_diff_cases)
+        test_validator.instance_variable_set(:@manifest_hash, test_manifest_hash_diff_cases)
         expect(test_validator.checksums_match?).to be(true)
       end
 
@@ -648,7 +701,7 @@ RSpec.describe Validator do
 
   describe '#checksums_unique?' do
     before do
-      test_validator.instance_variable_set(:@manifest_hash, expected_test_manifest_hash)
+      test_validator.instance_variable_set(:@manifest_hash, test_manifest_hash)
     end
 
     it 'returns true with a valid manifest file' do
@@ -656,7 +709,7 @@ RSpec.describe Validator do
     end
 
     it 'returns false with an invalid manifest file' do
-      test_validator.instance_variable_set(:@manifest_hash, expected_test_manifest_hash_not_unique)
+      test_validator.instance_variable_set(:@manifest_hash, test_manifest_hash_not_unique)
       expect(test_validator.checksums_unique?).to be(false)
     end
   end
