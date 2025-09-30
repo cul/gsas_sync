@@ -7,43 +7,31 @@ set :application, 'gsas_sync'
 set :repo_name, fetch(:application)
 set :repo_url, "git@github.com:cul/#{fetch(:repo_name)}.git/"
 set :deploy_name, -> { "#{fetch(:application)}_#{fetch(:stage)}" }
-set :remote_user, 'ldpdserv' # because we are accessing preservation storage (confirm this is appropriate)
-# set :remote_user, 'ldpdserv' # because we are accessing preservation storage (confirm this is appropriate)
+set :remote_user, 'ldpdserv' # because we are accessing preservation storage
 
-# Default branch is :master
-set :branch, 'deployment' # TODO: use main when actually deploying
-# ask :branch, `git rev-parse --abbrev-ref HEAD`.chomp
+ask :branch, `git rev-parse --abbrev-ref HEAD`.chomp
 
+# deploy_name = gsas_sync_{dev|test|prod}
 set :deploy_to, -> { "/opt/scripts/#{fetch(:deploy_name)}" }
 
 # Tag edits to the cron file - these will be overwritten each new deployment
 set :whenever_identifier, -> { "#{fetch(:application)}_#{fetch(:stage)}" }
-set :whenever_roles, %w[app]
+# Only servers with the production_app role will edit the crontab
+set :whenever_roles, %w[production_app]
 set :whenever_environment, -> { fetch(:stage) }
+# Pass data to be used in schedule.rb
 set :whenever_variables, -> { "'script_env=#{fetch(:deploy_name)}&rvm_command_prefix=#{fetch(:rvm_command_prefix)}'" }
+# default whenever_command is ->{[]:bundle, :exec, :whenever]}
+# This should be okay for gsas_sync
 # set :whenever_command, lambda {
-#   "whenever --set 'script_env=#{fetch(:deploy_name)}&path=#{deploy_to}/current/gsas_sync_main.rb&rvm_prefix=#{fetch(:rvm_command_prefix)}'"
+#   "whenever --set 'script_env=#{fetch(:deploy_name)}&path=#{deploy_to}/current/gsas_sync_main.rb&rvm_prefix=#{fetch(:rvm_command_prefix)}'" # rubocop:disable Layout/LineLength
 # }
 
 # Configure location where capistrano.log will be written
 set :format_options, log_file: 'logs/capistrano.log'
 
-# Default value for :format is :airbrussh.
-# set :format, :airbrussh
-
-# You can configure the Airbrussh format using :format_options.
-# These are the defaults.
-# set :format_options, command_output: true, log_file: "log/capistrano.log", color: :auto, truncate: :auto
-
-# Default value for :pty is false
-# set :pty, true
-
-# Default value for :linked_files is []
-# append :linked_files, "config/database.yml", 'config/master.key'
 append :linked_files, 'config/config.yml'
 
-# Default value for linked_dirs is []
-# append :linked_dirs, "log", "tmp/pids", "tmp/cache", "tmp/sockets", "public/system", "vendor", "storage"
 append :linked_dirs, '.bundle', 'logs'
 
 # Until we retire all old CentOS VMs, we need to set the rvm_custom_path because rvm is installed
@@ -59,27 +47,4 @@ set :rvm_command_prefix, "#{fetch(:rvm_custom_path, '~/.rvm')}/bin/rvm #{fetch(:
   )
 end
 
-# copy linked_files
-# namespace :deploy do
-#   desc 'Create deploy_to directory if it does not exist'
-#   task :ensure_deploy_to_exists do
-#     on roles(:all) do
-#       execute :mkdir, '-p', fetch(:deploy_to)
-#     end
-#   end
-
-#   before :starting, :ensure_deploy_to_exists
-#   before :check, 'linked_files:upload_files'
-# end
-
-# Default value for default_env is {}
-# set :default_env, { path: "/opt/ruby/bin:$PATH" }
-
-# Default value for local_user is ENV['USER']
-# set :local_user, -> { `git config user.name`.chomp }
-
-# Default value for keep_releases is 5
 # set :keep_releases, 5
-
-# Uncomment the following to require manually verifying the host key before first deploy.
-# set :ssh_options, verify_host_key: :secure

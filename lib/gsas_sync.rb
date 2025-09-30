@@ -27,6 +27,7 @@ class GsasSync
 
   # Deletes any .temp directories from the @preservation_dir on the local filesystem
   def rm_temp_dirs
+    Logger.log_all('Removing any local downloaded .temp directory(ies)')
     @downloaded_dirs.each do |dir|
       FileUtils.rm_rf("#{@preservation_dir}/#{dir}.temp") if File.directory?("#{@preservation_dir}/#{dir}.temp")
     end
@@ -35,23 +36,22 @@ class GsasSync
   # Attempts to download files from the remote server to a temporary directory using the SFTP client
   # Will handle any exceptions that occur, including fatal error
   def download_files_to_temp_dir
-    verify_dissertations_directory_exists
-    attempt_download
+    verify_dissertations_directory_exists!
+    attempt_download!
     Logger.progress('Successful transfer from remote host to local temporary directory')
   end
 
   # Side effect: sets the @downloaded_dirs array based on what was downloaded by the @sftp_client
-  def attempt_download
+  def attempt_download!
     @sftp_client = SftpClient.new
     @sftp_client.connect
     unless @sftp_client.uploads_dir?
       raise Exceptions::SftpClientError, 'Remote transfer server does not have an uploads directory'
     end
 
-    if @sftp_client.dissertations_dir_already_exists?(@preservation_dir, @uploads_dir)
-      raise Exceptions::SftpClientError,
-            'The dissertations directory we are trying to download already exists on the local machine.'
-    end
+    @sftp_client.check_dissertations_dir_already_exists!(@preservation_dir, @uploads_dir)
+
+    raise Exceptions::NoFilestoSync unless @sftp_client.dissertation_dirs?
 
     @sftp_client.ls(@uploads_dir)
     @sftp_client.dl_dissertation_dirs_to_temp(@uploads_dir, @preservation_dir)
@@ -60,7 +60,7 @@ class GsasSync
 
   # Verifies that the preservation directory described in the configuration file exists on the local machine
   # Returns nil. Raises a GsasSync::Exceptions::GsasError if it is not present.
-  def verify_dissertations_directory_exists
+  def verify_dissertations_directory_exists!
     return if File.directory? @preservation_dir
 
     raise GsasSync::Exceptions::GsasError,
@@ -68,11 +68,11 @@ class GsasSync
   end
 
   # Create Validator objects for each yyyy_mm_dissertations directory and runs all validations, returning the result
-  def validate_downloaded_files
+  def validate_downloaded_files!
     validators = init_validators
     if validators.empty?
       raise Exceptions::ValidationError,
-            'Unable to locate dissertation directory on remote'
+            'Unable to create validator objects - could not locate directories for validation'
     end
 
     valid = true
@@ -110,13 +110,13 @@ class GsasSync
   # An exception may occur sending mail
   def email_and_exit(success: true)
     result_str = success ? 'success' : 'failure'
+    rm_temp_dirs
     if Config.dry_run
       Logger.log_all("DRY RUN: Skipping #{result_str} email notification.")
       graceful_exit
     end
     Logger.log_all("Sending #{result_str} email notification. This will close the progress.log file...")
     Logger.close_progress_log_file
-    rm_temp_dirs
     mail_client.make_and_send_email(success: success)
   rescue StandardError => e
     Logger.stdout_logger.fatal("#{e.class} - #{e.message}")

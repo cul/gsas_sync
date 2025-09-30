@@ -131,21 +131,37 @@ class SftpClient
     false
   end
 
-  # Returns true if there is any yyyy_mm_dissertations directory in the local server preservation directory that has
+  # Raises a GsasError if the is any yyyy_mm_dissertations directory in the local server preservation directory that has
   # the same name as a yyyy_mm_dissertations directory in the uploads/ directory of the remote SFTP server.
-  # If the directory of that name is already on the local machine, perhaps it has already been downloaded.
+  # Also raises GsasError if the .temp version of that directory exists on the local machine.
+  # If the directory of the same name is already on the local machine, perhaps it has already been downloaded.
   # Regardless of why this occurrs, execution most likely cannot continue, as attempting to download the directory would
   # cause a naming collision with the extent one.
   # params:
   #  - preservation_dir : absolute path of the preservations directory on the local machine
   #  - uploads : name of the directory on the remote that contains the yyyy_mm_dissertations directories
-  def dissertations_dir_already_exists?(preservation_dir, uploads = 'uploads')
+  def check_dissertations_dir_already_exists!(preservation_dir, uploads = 'uploads')
     remote_dissertation_directories = []
     sftp_session.dir.foreach(uploads) do |entry|
       remote_dissertation_directories.push(entry.name) if entry.name.match?(Validator::DISSERTATION_DIR_REGEX)
     end
     remote_dissertation_directories.each do |match|
-      return true if File.directory?("#{preservation_dir}/#{match}")
+      if File.directory?("#{preservation_dir}/#{match}")
+        raise GsasSync::Exceptions::GsasError,
+              'The dissertations directory we are trying to download already exists on the local machine.'
+      end
+      # Look for the .temp version of the directory, too
+      if File.directory?("#{preservation_dir}/#{match}.temp")
+        raise GsasSync::Exceptions::GsasError,
+              'The dissertations directory we are trying to download already exists on the local machine as a temporary (.temp) directory.' # rubocop:disable Layout/LineLength
+      end
+    end
+  end
+
+  # Return true if there is at least one 'yyyy_mm_dd_dissertations' directory in the remote uploads directory
+  def dissertation_dirs?(uploads = 'uploads')
+    sftp_session.dir.foreach(uploads) do |entry|
+      return true if entry.name.match?(Validator::DISSERTATION_DIR_REGEX)
     end
     false
   end

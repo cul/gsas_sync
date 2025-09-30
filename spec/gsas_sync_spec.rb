@@ -89,8 +89,8 @@ RSpec.describe GsasSync do
 
     describe '#download_files_to_temp_dir' do
       before do
-        allow(test_gsas_sync).to receive(:verify_dissertations_directory_exists)
-        allow(test_gsas_sync).to receive(:attempt_download)
+        allow(test_gsas_sync).to receive(:verify_dissertations_directory_exists!)
+        allow(test_gsas_sync).to receive(:attempt_download!)
       end
 
       it 'logs to progress on success' do
@@ -100,7 +100,7 @@ RSpec.describe GsasSync do
     end
   end
 
-  describe '#attempt_download' do
+  describe '#attempt_download!' do
     let(:sftp_client_double) { instance_double(SftpClient) }
 
     before do
@@ -111,7 +111,8 @@ RSpec.describe GsasSync do
       allow(SftpClient).to receive(:new).and_return(sftp_client_double)
       allow(sftp_client_double).to receive(:connect)
       allow(sftp_client_double).to receive(:uploads_dir?).and_return(true)
-      allow(sftp_client_double).to receive(:dissertations_dir_already_exists?).and_return(false)
+      allow(sftp_client_double).to receive(:dissertation_dirs?).and_return(true)
+      allow(sftp_client_double).to receive(:check_dissertations_dir_already_exists!)
       allow(sftp_client_double).to receive(:ls)
       allow(sftp_client_double).to receive(:dl_dissertation_dirs_to_temp).and_return(false)
       allow(sftp_client_double).to receive(:dissertation_dirs_array).and_return(test_downloaded_dirs)
@@ -120,29 +121,29 @@ RSpec.describe GsasSync do
     end
 
     it 'downloads dissertation directories and sets @downloaded_dirs on success' do
-      test_gsas_sync.attempt_download
+      test_gsas_sync.attempt_download!
       expect(test_gsas_sync.instance_variable_get(:@downloaded_dirs)).to eql(test_downloaded_dirs)
     end
 
     it 'raises SftpClientError if there is no uploads directory on the transfer server' do
       allow(sftp_client_double).to receive(:uploads_dir?).and_return(false)
-      expect { test_gsas_sync.attempt_download }.to raise_error(GsasSync::Exceptions::SftpClientError)
+      expect { test_gsas_sync.attempt_download! }.to raise_error(GsasSync::Exceptions::SftpClientError)
     end
 
-    it 'raises SftpClientError if the dissertations directory on the transfer server has already been downloaded' do
-      allow(sftp_client_double).to receive(:dissertations_dir_already_exists?).and_return(true)
-      expect { test_gsas_sync.attempt_download }.to raise_error(GsasSync::Exceptions::SftpClientError)
+    it 'raises NoFilesToSync error if there are no directories to download from the transfer server' do
+      allow(sftp_client_double).to receive(:dissertation_dirs?).and_return(false)
+      expect { test_gsas_sync.attempt_download! }.to raise_error(GsasSync::Exceptions::NoFilestoSync)
     end
   end
 
-  describe '#verify_dissertations_directory_exists' do
+  describe '#verify_dissertations_directory_exists!' do
     it 'raises a GsasError if the directory set as the download location on the local machine' do
       allow(File).to receive(:directory?).and_return(false)
-      expect { test_gsas_sync.verify_dissertations_directory_exists }.to raise_error(GsasSync::Exceptions::GsasError)
+      expect { test_gsas_sync.verify_dissertations_directory_exists! }.to raise_error(GsasSync::Exceptions::GsasError)
     end
   end
 
-  describe '#validate_downloaded_files' do
+  describe '#validate_downloaded_files!' do
     let(:validator_double1) { instance_double(Validator) }
     let(:validator_double2) { instance_double(Validator) }
 
@@ -154,12 +155,12 @@ RSpec.describe GsasSync do
     end
 
     it 'returns true if each validator passes validations' do
-      expect(test_gsas_sync.validate_downloaded_files).to be(true)
+      expect(test_gsas_sync.validate_downloaded_files!).to be(true)
     end
 
     it 'returns false if at least one validator fails validations' do
       allow(validator_double1).to receive(:run_validations).and_return(false)
-      expect(test_gsas_sync.validate_downloaded_files).to be(false)
+      expect(test_gsas_sync.validate_downloaded_files!).to be(false)
     end
   end
 
@@ -238,6 +239,7 @@ RSpec.describe GsasSync do
 
     context 'in non-dry run' do
       before do
+        allow(test_gsas_sync).to receive(:rm_temp_dirs)
         allow(logger_double).to receive(:fatal)
         allow(GsasSync::Logger).to receive(:progress_log_append)
       end

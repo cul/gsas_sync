@@ -41,6 +41,9 @@ GsasSync::Logger.begin_step('Download files from remote',
                             "Downloading files from the remote transfer (sftp) server #{server_name}")
 begin
   gsas_sync.download_files_to_temp_dir
+rescue GsasSync::Exceptions::NoFilestoSync
+  GsasSync::Logger.log_all_fatal('There are no directories to download from the remote. Script will exit without notifying. Transfers are attempted once a day for the first 7 days of each month.') # rubocop:disable Layout/LineLength
+  gsas_sync.graceful_exit
 rescue StandardError => e
   GsasSync::Logger.log_all_fatal("An error occurred downloading files from the remote server. Error: #{e}. Exiting...")
   gsas_sync.email_and_exit(success: false)
@@ -48,7 +51,7 @@ end
 
 GsasSync::Logger.begin_step 'Validating downloaded files'
 begin
-  valid = gsas_sync.validate_downloaded_files
+  valid = gsas_sync.validate_downloaded_files!
 rescue StandardError => e
   GsasSync::Logger.log_all_fatal("An unexpected fatal error occurred while validating the downloaded files: #{e}. Unable to proceed. Exiting...") # rubocop:disable Layout/LineLength
   gsas_sync.email_and_exit(success: false)
