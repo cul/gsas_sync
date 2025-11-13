@@ -6,15 +6,14 @@
 # Use this file to easily define all of your cron jobs.
 # Learn more: http://github.com/javan/whenever
 
-# Log cron output to app log directory
-set :output, "#{path}/logs/#{@script_env}_cron_log.log"
-
 # Our job template wraps the cron job in a script that emails out any unhandled errors.
 # This is a CUL provided script. More details can be found here:
 # https://wiki.library.columbia.edu/display/USGSERVICES/Cron+Management
 set :email_subject, 'GSAS Sync Cron Error (via Whenever Gem)'
 set :error_recipient, 'bg2918@columbia.edu' # Todo change to dev email the config yml file
 set :job_template, "/usr/local/bin/mailifrc -s 'Error - :email_subject' :error_recipient -- /bin/bash -l -c ':job'"
+puts 'whenever.rb file:'
+puts "@script_env#{@script_env}"
 
 # Override default rake task job type
 # job_type :rake, 'cd :path && :environment_variable=:environment bundle exec rake :task --silent :output'
