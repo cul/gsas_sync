@@ -21,6 +21,7 @@ puts "@script_env#{@script_env}"
 ############################  COMMAND  #########################################
 # Run dissertation sync script once a day on days 1-7 of each month:
 every '0 0 1-7 * *', at: '12:01 am' do
+  command "echo 'script_env is : #{@script_env}' > /tmp/script_env.txt"
   unless @script_env == 'gsas_sync_prod' # rubocop:disable Style/IfUnlessModifier
     command "#{@rvm_command_prefix} #{@path}/gsas_sync_main.rb"
   end
