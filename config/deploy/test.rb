@@ -2,3 +2,5 @@
 
 set :stage, :test
 server 'diglib-service-prod1.cul.columbia.edu', user: fetch(:remote_user)
+
+ask :branch, `git rev-parse --abbrev-ref HEAD`.chomp

@@ -7,7 +7,7 @@
 # Learn more: http://github.com/javan/whenever
 
 # Log cron output to app log directory
-# set :output, ("shared/log/#{Rails.env}_cron_log.log")
+set :output, "#{path}/logs/#{@script_env}_cron_log.log"
 
 # Our job template wraps the cron job in a script that emails out any unhandled errors.
 # This is a CUL provided script. More details can be found here:
@@ -21,7 +21,9 @@ set :job_template, "/usr/local/bin/mailifrc -s 'Error - :email_subject' :error_r
 
 ############################  COMMAND  #########################################
 # Run dissertation sync script once a day on days 1-7 of each month:
-# every '0 0 1-7 * *' do
-#   command "#{@rvm_command_prefix} #{@path}/gsas_sync_main.rb"
-# end
+every '0 0 1-7 * *', at: '12:01 am' do
+  unless @script_env == 'gsas_sync_prod' # rubocop:disable Style/IfUnlessModifier
+    command "#{@rvm_command_prefix} #{@path}/gsas_sync_main.rb"
+  end
+end
 ################################################################################

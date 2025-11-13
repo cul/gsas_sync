@@ -9,8 +9,6 @@ set :repo_url, "git@github.com:cul/#{fetch(:repo_name)}.git/"
 set :deploy_name, -> { "#{fetch(:application)}_#{fetch(:stage)}" }
 set :remote_user, 'ldpdserv' # because we are accessing preservation storage
 
-ask :branch, `git rev-parse --abbrev-ref HEAD`.chomp
-
 # deploy_name = gsas_sync_{dev|test|prod}
 set :deploy_to, -> { "/opt/scripts/#{fetch(:deploy_name)}" }
 
