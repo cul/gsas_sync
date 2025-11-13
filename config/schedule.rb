@@ -15,8 +15,9 @@ set :job_template, "/usr/local/bin/mailifrc -s 'Error - :email_subject' :error_r
 
 # Override default rake task job type
 # job_type :rake, 'cd :path && :environment_variable=:environment bundle exec rake :task --silent :output'
-
-command "echo 'script_env is : #{@script_env}' > /tmp/script_env.txt"
+every :minute do
+  command "echo 'script_env is : #{@script_env}' > /tmp/script_env.txt"
+end
 ############################  COMMAND  #########################################
 # Run dissertation sync script once a day on days 1-7 of each month:
 every '0 0 1-7 * *' do
