@@ -18,7 +18,10 @@ set :job_template, "/usr/local/bin/mailifrc -s 'Error - :email_subject' :error_r
 
 ############################  COMMAND  #########################################
 # Run dissertation sync script once a day on days 1-7 of each month:
-every '0 0 1-7 * *' do
-  command "#{@rvm_command_prefix} #{@path}/gsas_sync_main.rb" if @script_env == 'gsas_sync_prod'
+if @script_env == 'gsas_sync_prod'
+  every '0 0 1-7 * *' do
+    command "cd #{path}"
+    command "#{@rvm_command_prefix} gsas_sync_main.rb"
+  end
 end
 ################################################################################
